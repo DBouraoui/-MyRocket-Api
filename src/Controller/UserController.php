@@ -30,7 +30,7 @@ final class UserController extends AbstractController
 
     }
 
-    #[Route(methods: ['POST'])]
+    #[Route( '/register', name: 'user_register', methods: ['POST'])]
     public function post(Request $request): JsonResponse
     {
         try {
