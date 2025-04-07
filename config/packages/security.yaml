@@ -20,10 +20,11 @@ security:
             stateless: true
             jwt: ~
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login,         roles: PUBLIC_ACCESS }
         - { path: ^/api/user/register, roles: PUBLIC_ACCESS }
-        - { path: ^/api/user, roles: ROLE_ADMIN }
-        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/user,          roles: ROLE_ADMIN }
+        - { path: ^/api/contact,       roles: PUBLIC_ACCESS }
+        - { path: ^/api,               roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:
