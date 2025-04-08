@@ -33,7 +33,7 @@ final class UserController extends AbstractController
     }
 
     #[Route( '/register', name: 'user_register', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('PUBLIC_ACCESS')]
     public function post(Request $request): JsonResponse
     {
         try {
@@ -131,8 +131,11 @@ final class UserController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true);
 
-            if ($user->getUuid() !== $data['uuid']) {
-                throw new \Exception("Utilisateur incorrect");
+            if (!in_array('ROLE_ADMIN', $user->getRoles()))
+            {
+                if ($user->getUuid() !== $data['uuid']) {
+                    throw new \Exception("Utilisateur incorrect");
+                }
             }
 
             $userPutDTO = USERPUTDTO::fromArray($data);
