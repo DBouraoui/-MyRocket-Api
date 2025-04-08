@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\user\RegisterDTO;
+use App\DTO\user\UserDeleteDTO;
+use App\DTO\user\UserPutDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -12,9 +15,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Constraints\Collection;
-use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('api/user', name: 'user',)]
@@ -31,24 +33,15 @@ final class UserController extends AbstractController
     }
 
     #[Route( '/register', name: 'user_register', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function post(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
 
-            $constraints = new Collection([
-                'firstname' => [new NotBlank()],
-                'lastname' => [new NotBlank()],
-                'email' => [new NotBlank(), new Email()],
-                'password' => [new NotBlank()],
-                'postcode' => [new NotBlank()],
-                'city' => [new NotBlank()],
-                'country' => [new NotBlank()],
-                'address' => [new NotBlank()],
-                'phone' => [new NotBlank()]
-            ]);
+            $registerDTO = RegisterDTO::fromArray($data);
 
-            $violations = $this->validator->validate($data, $constraints);
+            $violations = $this->validator->validate($registerDTO);
 
             if (count($violations) > 0) {
                 $error = [];
@@ -58,12 +51,16 @@ final class UserController extends AbstractController
                 return $this->json($error, Response::HTTP_BAD_REQUEST);
             }
 
+            if (!empty($this->userRepository->findOneBy(['email'=>$data['email']]))) {
+                throw new \Exception('User already exists');
+            }
+
             $user = new User();
             $user->setFirstname($data['firstname']);
             $user->setLastname($data['lastname']);
             $user->setEmail($data['email']);
             $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
-            $user->setPostCode($data['postcode']);
+            $user->setPostCode($data['postCode']);
             $user->setCity($data['city']);
             $user->setCountry($data['country']);
             $user->setAddress($data['address']);
@@ -76,52 +73,92 @@ final class UserController extends AbstractController
 
         } catch ( \Exception $e ) {
             $this->logger->error("Error creating user", ['error' => $e->getMessage()]);
-            return $this->json(['error' => 'Internal Server Error'], Response::HTTP_INTERNAL_SERVER_ERROR);        }
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
 
     #[Route(methods: ['GET'])]
-    public function get(Request $request) {
+    #[IsGranted('ROLE_ADMIN')]
+    public function get(Request $request): JsonResponse
+    {
         try {
             $criteria = $request->query->get('criteria');
             $all = $request->query->get('all');
 
             if (!empty($criteria) && empty($all)) {
                 $userFinding = $this->userRepository->getOneUserByCriteria($criteria);
-                return $this->json($this->normalizeUserObject($userFinding), Response::HTTP_OK);
+
+                if (empty($userFinding)) {
+                    return $this->json(
+                        ['success' => false, 'message' => 'Utilisateur non trouvé'],
+                        Response::HTTP_NOT_FOUND
+                    );
+                }
+
+                return $this->json(
+                    ['success' => true, 'data' => $this->normalizeUserObject($userFinding)],
+                    Response::HTTP_OK
+                );
             }
 
             if (!empty($all) && empty($criteria)) {
                 $userFinding = $this->userRepository->findAll();
-                return $this->json($this->normalizeUsersObjects($userFinding), Response::HTTP_OK);
+                return $this->json(
+                    ['success' => true, 'data' => $this->normalizeUsersObjects($userFinding)],
+                    Response::HTTP_OK
+                );
             }
 
-            return $this->json(['message' => 'No valid criteria provided'], Response::HTTP_BAD_REQUEST);
+            return $this->json(
+                ['success' => false, 'message' => 'Aucun critère valide fourni'],
+                Response::HTTP_BAD_REQUEST
+            );
 
-        } catch(\Exception $e) {
-            $this->logger->error("Error retrieving users", ['error' => $e->getMessage()]);
-            return $this->json(['error' => 'Internal Server Error'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Exception $e) {
+            $this->logger->error("Erreur lors de la récupération des utilisateurs", ['error' => $e->getMessage()]);
+            return $this->json(
+                ['success' => false, 'message' => 'Erreur serveur interne'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     #[Route(methods: ['PUT'])]
-    public function put(Request $request): JsonResponse
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function put(Request $request, #[CurrentUser]User $user): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
 
-            $customer = $this->userRepository->findOneBy(['uuid' => $data['uuid']]);
-            if (!$customer) {
+            if ($user->getUuid() !== $data['uuid']) {
+                throw new \Exception("Utilisateur incorrect");
+            }
+
+            $userPutDTO = USERPUTDTO::fromArray($data);
+
+           $violations = $this->validator->validate($userPutDTO);
+
+
+           if (count($violations) > 0) {
+               $error = [];
+               foreach ($violations as $violation) {
+                   $error[] = $violation->getMessage();
+               }
+               return $this->json($error, Response::HTTP_BAD_REQUEST);
+           }
+
+           $customer = $this->userRepository->findOneBy(['uuid'=>$userPutDTO->uuid]);
+
+            if (empty($customer)) {
                 return $this->json(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
             }
 
-            unset($data['uuid']);
-
             $allowedFields = ['email', 'firstname', 'lastname', 'phone', 'address', 'city', 'postCode', 'country'];
+            unset($data['uuid']);
 
             foreach ($data as $field => $value) {
                 if (!in_array($field, $allowedFields)) {
-                    unset($data[$field]);
                      return $this->json(['error' => 'Field not allowed: ' . $field], Response::HTTP_BAD_REQUEST);
                 }
             }
@@ -144,24 +181,58 @@ final class UserController extends AbstractController
 
         } catch(\Exception $e) {
             $this->logger->error("Error updating user", ['error' => $e->getMessage()]);
-            return $this->json(['error' => 'Internal Server Error'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route(methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
+
+            $deleteDTO = userDeleteDTO::fromArray($data);
+
+            $violations = $this->validator->validate($deleteDTO);
+
+            if (count($violations) > 0) {
+                $error = [];
+                foreach ($violations as $violation) {
+                    $error[] = $violation->getMessage();
+                }
+                return $this->json($error, Response::HTTP_BAD_REQUEST);
+            }
+
+            if (empty($deleteDTO->uuid)) {
+                return $this->json(
+                    ['success' => false, 'message' => 'UUID utilisateur requis'],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $customer = $this->userRepository->findOneBy(['uuid' => $data['uuid']]);
+
+            if (empty($customer)) {
+                return $this->json(
+                    ['success' => false, 'message' => 'Utilisateur non trouvé'],
+                    Response::HTTP_NOT_FOUND
+                );
+            }
 
             $this->entityManager->remove($customer);
             $this->entityManager->flush();
 
-            return $this->json(['message' => 'User deleted successfully'], Response::HTTP_OK);
-        } catch(\Exception $e) {
-            $this->logger->error("Error deleting user", ['error' => $e->getMessage()]);
-            return $this->json(['error' => 'Internal Server Error'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json(
+                ['success' => true, 'message' => 'Utilisateur supprimé avec succès'],
+                Response::HTTP_OK
+            );
+        } catch (\Exception $e) {
+            $this->logger->error("Erreur lors de la suppression de l'utilisateur", ['error' => $e->getMessage()]);
+            return $this->json(
+                ['success' => false, 'message' => 'Erreur serveur interne'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
