@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\ProjectToDisplay\ProjectCreateDTO;
+use App\DTO\ProjectToDisplay\ProjectUpdateDTO;
 use App\Entity\ProjectsToDisplay;
 use App\Repository\ProjectsToDisplayRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,40 +13,45 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/project', name: 'app_projects_to_diplay')]
 final class ProjectsToDiplayController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface $logger,
-        private readonly SluggerInterface $slugger,
-        private readonly ProjectsToDisplayRepository $projectsToDisplayRepository,
+        private readonly EntityManagerInterface      $entityManager,
+        private readonly LoggerInterface             $logger,
+        private readonly SluggerInterface            $slugger,
+        private readonly ProjectsToDisplayRepository $projectsToDisplayRepository, private readonly ValidatorInterface $validator,
     ) {}
 
     #[Route(name: 'app_projects_to_diplay', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function index(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
 
-            $requiredFields = ['title', 'description', 'link', 'tags'];
-            foreach ($requiredFields as $field) {
-                if (!isset($data[$field])) {
-                    return $this->json(
-                        ['success' => false, 'message' => 'Le champ ' . $field . ' est requis'],
-                        Response::HTTP_BAD_REQUEST
-                    );
-                }
-            }
+           $projectCreateDTO = ProjectCreateDTO::fromArray($data);
+
+           $violations = $this->validator->validate($projectCreateDTO);
+
+           if (count($violations) > 0) {
+               $errors = [];
+               foreach ($violations as $violation) {
+                   $errors[$violation->getPropertyPath()] = $violation->getMessage();
+               }
+               return $this->json($errors, Response::HTTP_BAD_REQUEST);
+           }
 
             $project = new ProjectsToDisplay();
-            $project->setTitle($data['title']);
-            $project->setDescription($data['description']);
-            $project->setSlug($this->slugger->slug($data['title']));
-            $project->setLink($data['link']);
-            $project->setTags($data['tags']);
+            $project->setTitle($projectCreateDTO->title);
+            $project->setDescription($projectCreateDTO->description);
+            $project->setSlug($this->slugger->slug($projectCreateDTO->title));
+            $project->setLink($projectCreateDTO->link);
+            $project->setTags($projectCreateDTO->tags);
 
             $this->entityManager->persist($project);
             $this->entityManager->flush();
@@ -60,6 +67,7 @@ final class ProjectsToDiplayController extends AbstractController
     }
 
     #[Route(name: 'app_projects_to_diplay_get', methods: ['GET'])]
+    #[isGranted('PUBLIC_ACCESS')]
     public function get(Request $request): JsonResponse
     {
         try {
@@ -95,13 +103,25 @@ final class ProjectsToDiplayController extends AbstractController
     }
 
     #[Route(name: 'app_projects_to_diplay_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
 
-            // Correction ici: findOneBy prend un tableau associatif comme critère
-            $projects = $this->projectsToDisplayRepository->findOneBy(['uuid' => $data['uuid']]);
+            $uprojectUpdateDTO = ProjectUpdateDTO::fromArray($data);
+
+            $violations = $this->validator->validate($uprojectUpdateDTO);
+
+            if (count($violations) > 0) {
+                $errors = [];
+                foreach ($violations as $violation) {
+                    $errors[$violation->getPropertyPath()] = $violation->getMessage();
+                }
+                return $this->json($errors, Response::HTTP_BAD_REQUEST);
+            }
+
+            $projects = $this->projectsToDisplayRepository->findOneBy(['uuid' => $uprojectUpdateDTO->uuid]);
 
             if (empty($projects)) {
                 return $this->json(['success'=>false],Response::HTTP_EXPECTATION_FAILED);
@@ -133,6 +153,7 @@ final class ProjectsToDiplayController extends AbstractController
     }
 
     #[Route(name: 'app_projects_to_diplay_delete', methods: ['DELETE'])]
+    #[isGranted('ROLE_ADMIN')]
     public function delete(Request $request): JsonResponse
     {
         try {

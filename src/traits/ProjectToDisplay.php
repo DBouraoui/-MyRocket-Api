@@ -3,18 +3,29 @@
 namespace App\traits;
 
 use App\Entity\ProjectsToDisplay;
+use Doctrine\ORM\Mapping\Id;
+use Symfony\Component\Validator\Constraints\DateTime;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\Uuid;
 
 trait ProjectToDisplay
 {
-    public ?int $id = null;
-    public ?string $uuid = null;
-    public ?string $title = null;
-    public ?string $description = null;
-    public ?string $slug = null;
-    public ?\DateTimeImmutable $createdAt = null;
-    public ?\DateTimeImmutable $updatedAt = null;
-    public array $tags = [];
-    public array $link = [];
+    #[Id]
+    public ?int $id;
+    #[Uuid]
+    public ?string $uuid;
+    #[Length(min:1,max: 255)]
+    public ?string $title;
+    #[Length(min:1,max: 255)]
+    public ?string $description;
+    #[Length(min:1,max: 255)]
+    public ?string $slug;
+    #[DateTime]
+    public ?\DateTimeImmutable $createdAt;
+    #[DateTime]
+    public ?\DateTimeImmutable $updatedAt;
+    public array $tags;
+    public array $link;
 
     public function normalize(ProjectsToDisplay $projectToDisplay): array
     {
@@ -38,6 +49,22 @@ trait ProjectToDisplay
         }
 
         return $projectsToDiplayArray;
+    }
+
+    public static function fromArray(array $data): self
+    {
+        if(empty($data)) {
+            throw new \Exception('The array is empty');
+        }
+
+        $self = new self();
+
+        foreach ($data as $key => $value) {
+            if (property_exists($self, $key)) {
+                $self->{$key} = $value;
+            }
+        }
+        return $self;
     }
 
 }
