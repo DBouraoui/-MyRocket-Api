@@ -40,6 +40,9 @@ class ProjectsToDisplay
     #[ORM\Column(type: Types::JSON)]
     private array $link = [];
 
+    #[ORM\Column]
+    private array $pictures = [];
+
     public function getId(): ?int
     {
         return $this->id;
@@ -150,5 +153,17 @@ class ProjectsToDisplay
 
     public function updateProjects() {
         $this->updatedAt = new \DateTimeImmutable('now');
+    }
+
+    public function getPictures(): array
+    {
+        return $this->pictures;
+    }
+
+    public function setPictures(array $pictures): static
+    {
+        $this->pictures = $pictures;
+
+        return $this;
     }
 }

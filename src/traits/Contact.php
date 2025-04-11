@@ -42,7 +42,7 @@ trait Contact {
     public ?string $email;
 
     #[Length(
-        min: 1,
+        min: 0,
         max: 255,
         minMessage: "Le prénom doit contenir au moins {{ limit }} caractère.",
         maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères."
@@ -50,7 +50,7 @@ trait Contact {
     public ?string $firstname;
 
     #[Length(
-        min: 1,
+        min: 0,
         max: 255,
         minMessage: "Le nom doit contenir au moins {{ limit }} caractère.",
         maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
@@ -58,7 +58,7 @@ trait Contact {
     public ?string $lastname;
 
     #[Length(
-        min: 1,
+        min: 0,
         max: 255,
         minMessage: "Le nom de l'entreprise doit contenir au moins {{ limit }} caractère.",
         maxMessage: "Le nom de l'entreprise ne peut pas dépasser {{ limit }} caractères."

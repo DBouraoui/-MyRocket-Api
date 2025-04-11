@@ -39,6 +39,10 @@ final class UserController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true);
 
+            if (empty($data)) {
+                throw new \Exception('Les données reçus sont vide');
+            }
+
             $registerDTO = RegisterDTO::fromArray($data);
 
             $violations = $this->validator->validate($registerDTO);
@@ -56,8 +60,9 @@ final class UserController extends AbstractController
             }
 
             $user = new User();
-            $user->setFirstname($data['firstname']);
-            $user->setLastname($data['lastname']);
+            $data['firstname'] ? $user->setFirstname($data['firstname']) : null;
+            $data['lastname'] ? $user->setLastname($data['lastname']) : null;
+            $data['companyName'] ? $user->setCompanyName($data['companyName']) : null;
             $user->setEmail($data['email']);
             $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
             $user->setPostCode($data['postCode']);
@@ -105,7 +110,7 @@ final class UserController extends AbstractController
             if (!empty($all) && empty($criteria)) {
                 $userFinding = $this->userRepository->findAll();
                 return $this->json(
-                    ['success' => true, 'data' => $this->normalizeUsersObjects($userFinding)],
+                    $this->normalizeUsersObjects($userFinding),
                     Response::HTTP_OK
                 );
             }
@@ -157,8 +162,16 @@ final class UserController extends AbstractController
                 return $this->json(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
             }
 
-            $allowedFields = ['email', 'firstname', 'lastname', 'phone', 'address', 'city', 'postCode', 'country'];
+            $allowedFields = ['email', 'firstname', 'lastname', 'phone', 'address', 'city', 'postCode', 'country', 'companyName'];
             unset($data['uuid']);
+
+            if (isset($data['email']) && $data['email'] !== $customer->getEmail()) {
+                // Vérifier si l'email est déjà utilisé par un autre utilisateur
+                $existingUser = $this->userRepository->findOneBy(['email' => $data['email']]);
+                if ($existingUser && $existingUser->getUuid() !== $customer->getUuid()) {
+                    return $this->json(['error' => 'Cet email est déjà utilisé par un autre compte'], Response::HTTP_CONFLICT);
+                }
+            }
 
             foreach ($data as $field => $value) {
                 if (!in_array($field, $allowedFields)) {
@@ -188,14 +201,19 @@ final class UserController extends AbstractController
         }
     }
 
-    #[Route(methods: ['DELETE'])]
+    #[Route( path: '/{uuid}' ,methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function delete(Request $request): JsonResponse
+    public function delete(string $uuid, Request $request): JsonResponse
     {
         try {
-            $data = json_decode($request->getContent(), true);
-
-            $deleteDTO = userDeleteDTO::fromArray($data);
+            if (empty($uuid)) {
+                return $this->json(
+                    ['success' => false, 'message' => 'UUID utilisateur requis'],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+            $deleteDTO = new UserDeleteDTO();
+            $deleteDTO->uuid = $uuid;
 
             $violations = $this->validator->validate($deleteDTO);
 
@@ -207,14 +225,7 @@ final class UserController extends AbstractController
                 return $this->json($error, Response::HTTP_BAD_REQUEST);
             }
 
-            if (empty($deleteDTO->uuid)) {
-                return $this->json(
-                    ['success' => false, 'message' => 'UUID utilisateur requis'],
-                    Response::HTTP_BAD_REQUEST
-                );
-            }
-
-            $customer = $this->userRepository->findOneBy(['uuid' => $data['uuid']]);
+            $customer = $this->userRepository->findOneBy(['uuid' => $uuid]);
 
             if (empty($customer)) {
                 return $this->json(
@@ -245,8 +256,9 @@ final class UserController extends AbstractController
             'uuid' => $user->getUuid(),
             'firstname' => $user->getFirstname(),
             'lastname' => $user->getLastname(),
+            'companyName' => $user->getCompanyName(),
             'email' => $user->getEmail(),
-            'postcode' => $user->getPostCode(),
+            'postCode' => $user->getPostCode(),
             'city' => $user->getCity(),
             'country' => $user->getCountry(),
             'address' => $user->getAddress(),

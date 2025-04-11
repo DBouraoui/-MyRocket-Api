@@ -22,6 +22,7 @@ class ProjectsToDisplayRepository extends ServiceEntityRepository
             ->andWhere('p.uuid = :key')
             ->orWhere('p.slug = :key')
             ->setParameter('key', $key)
+            ->orderBy('p.updatedAt', 'ASC')
             ->getQuery()
             ->getOneOrNullResult();
     }

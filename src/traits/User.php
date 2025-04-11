@@ -29,20 +29,21 @@ trait User {
     public ?string $uuid;
 
     #[Length(
-        min: 1,
         max: 255,
-        minMessage: "Le prénom doit contenir au moins {{ limit }} caractère.",
         maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères."
     )]
     public ?string $firstname;
 
     #[Length(
-        min: 1,
         max: 255,
-        minMessage: "Le nom doit contenir au moins {{ limit }} caractère.",
         maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
     )]
     public ?string $lastname;
+    #[Length(
+        max: 255,
+        maxMessage: "Le nom de la company ne peut pas dépasser {{ limit }} caractères."
+    )]
+    public ?string $companyName;
 
     #[Assert\DateTime]
     public ?\DateTimeImmutable $createdAt;

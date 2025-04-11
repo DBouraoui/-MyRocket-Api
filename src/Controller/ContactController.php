@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -23,7 +24,8 @@ final class ContactController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface        $logger,
         private readonly FilesystemOperator     $contactStorage,
-        private readonly  ContactRepository     $contactRepository, private readonly ValidatorInterface $validator,
+        private readonly  ContactRepository     $contactRepository,
+        private readonly ValidatorInterface $validator,
     )
     {}
 
@@ -32,19 +34,27 @@ final class ContactController extends AbstractController
     public function post(Request $request): JsonResponse
     {
         try {
-          $data = json_decode($request->getContent(), true);
+            $data = [
+                'firstname' => $request->request->get('firstname'),
+                'lastname' => $request->request->get('lastname'),
+                'companyName' => $request->request->get('companyName'),
+                'email' => $request->request->get('email'),
+                'title' => $request->request->get('title'),
+                'description' => $request->request->get('description'),
+                'tags'=> json_decode($request->request->get('tags'), true),
+            ];
 
-          $contactCreateDTO = ContactCreateDTO::fromArray($data);
+            $contactCreateDTO = ContactCreateDTO::fromArray($data);
 
-          $violations = $this->validator->validate($contactCreateDTO);
+            $violations = $this->validator->validate($contactCreateDTO);
 
-          if (count($violations) > 0) {
-              $errors =[];
-              foreach ($violations as $violation) {
-                  $errors[$violation->getPropertyPath()] = $violation->getMessage();
-              }
-              return $this->json($errors, Response::HTTP_BAD_REQUEST);
-          }
+            if (count($violations) > 0) {
+                $errors = [];
+                foreach ($violations as $violation) {
+                    $errors[$violation->getPropertyPath()] = $violation->getMessage();
+                }
+                return $this->json($errors, Response::HTTP_BAD_REQUEST);
+            }
 
             $contact = new Contact();
             $contactCreateDTO->firstname ? $contact->setFirstname($contactCreateDTO->firstname) : null;
@@ -58,23 +68,18 @@ final class ContactController extends AbstractController
 
             $arrayLinkPictures = [];
 
-            $uploadedFiles = $request->files->get('pictures');
+            $uploadedFile = $request->files->get('pictures');
 
-            if (!empty($uploadedFiles)) {
-
-                if (filesize($uploadedFiles) > 5000000) {
-                    return $this->json(['success'=>false, 'message'=> 'The weight of image is to big'], Response::HTTP_EXPECTATION_FAILED);
+            if ($uploadedFile) {
+                if (filesize($uploadedFile) > 5000000) {
+                    return $this->json(['success'=>false, 'message'=> 'The weight of image is too big'], Response::HTTP_EXPECTATION_FAILED);
                 }
 
-                if (!is_array($uploadedFiles)) {
-                    $fileName = uniqid('contact_') . '.jpg';
-                    $fileContent = file_get_contents($uploadedFiles->getPathname());
-                    $this->contactStorage->write($fileName, $fileContent);
-                    $arrayLinkPictures[] = $fileName;
-                    $this->logger->debug('Saved single file: ' . $fileName);
-                } else {
-                    $this->logger->warning('Unexpected file format: ' . gettype($uploadedFiles));
-                }
+                $fileName = uniqid('contact_') . '.jpg';
+                $fileContent = file_get_contents($uploadedFile->getPathname());
+                $this->contactStorage->write($fileName, $fileContent);
+                $arrayLinkPictures[] = $fileName;
+                $this->logger->debug('Saved file: ' . $fileName);
 
                 if (!empty($arrayLinkPictures)) {
                     $contact->setPictures($arrayLinkPictures);
@@ -90,44 +95,8 @@ final class ContactController extends AbstractController
             );
 
         } catch (\Exception $e) {
-                $this->logger->error("Erreur lors de la création du contact: " . $e->getMessage());
-                return $this->json(['error' => 'Erreur serveur'], Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-    }
-
-    #[Route(methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function get(Request $request): JsonResponse
-    {
-        try {
-            $oneContactByUuid = $request->query->get('uuid');
-            $all = $request->query->get('all');
-
-            if (!empty($oneContactByUuid) && empty($all)) {
-                $contact = $this->contactRepository->findOneBy(['uuid' => $oneContactByUuid]);
-
-                if (empty($contact)) {
-                    return $this->json(
-                        ['success' => false, 'message' => 'Contact non trouvé'],
-                        Response::HTTP_NOT_FOUND
-                    );
-                }
-
-                return $this->json($this->normalizeContact($contact), Response::HTTP_OK);
-            }
-
-            if (!empty($all) && empty($oneContactByUuid)) {
-                $contacts = $this->contactRepository->findAll();
-                return $this->json($this->normalizeContacts($contacts), Response::HTTP_OK);
-            }
-
-            return $this->json(
-                ['success' => false, 'message' => 'Aucune donnée ne correspond'],
-                Response::HTTP_BAD_REQUEST
-            );
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return $this->json(['error' => 'Erreur serveur'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $this->logger->error("Erreur lors de la création du contact: " . $e->getMessage());
+            return $this->json(['error' => 'Erreur serveur: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -153,27 +122,208 @@ final class ContactController extends AbstractController
                 );
             }
 
+            $pictures = $contact->getPictures();
+            $deletedFiles = [];
+            $failedFiles = [];
+
+            foreach ($pictures as $picture) {
+                try {
+                    $filePath = $picture;
+
+                    if ($this->contactStorage->fileExists($filePath)) {
+                        $this->contactStorage->delete($filePath);
+                        $deletedFiles[] = $filePath;
+                    } else {
+                        $failedFiles[] = $filePath;
+                        $this->logger->warning("Fichier non trouvé lors de la suppression : {$filePath}");
+                    }
+                } catch (\Exception $e) {
+                    $failedFiles[] = $picture;
+                    $this->logger->error("Erreur lors de la suppression du fichier {$picture}: " . $e->getMessage());
+                }
+            }
+
             $this->entityManager->remove($contact);
             $this->entityManager->flush();
 
-            return $this->json(
-                ['success' => true, 'message' => 'Contact supprimé'],
-                Response::HTTP_OK
-            );
+            return $this->json([
+                'success' => true,
+                'message' => 'Contact supprimé',
+                'deletedFiles' => $deletedFiles,
+                'failedFiles' => $failedFiles
+            ], Response::HTTP_OK);
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error('Erreur lors de la suppression du contact: ' . $e->getMessage());
             return $this->json(
-                ['success' => false, 'message' => 'Erreur serveur'],
+                ['success' => false, 'message' => 'Erreur serveur: ' . $e->getMessage()],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
     }
 
+    #[Route(methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function get(Request $request): JsonResponse
+    {
+        try {
+            $oneContactByUuid = $request->query->get('uuid');
+            $all = $request->query->get('all');
+            $withImageUrls = $request->query->getBoolean('withImageUrls', true); // Paramètre optionnel pour les URLs d'images
+
+            if (!empty($oneContactByUuid) && empty($all)) {
+                $contact = $this->contactRepository->findOneBy(['uuid' => $oneContactByUuid]);
+
+                if (empty($contact)) {
+                    return $this->json(
+                        ['success' => false, 'message' => 'Contact non trouvé'],
+                        Response::HTTP_NOT_FOUND
+                    );
+                }
+
+                return $this->json([
+                    'success' => true,
+                    'data' => $this->normalizeContact($contact, $withImageUrls)
+                ], Response::HTTP_OK);
+            }
+
+            if (!empty($all) && empty($oneContactByUuid)) {
+                $contacts = $this->contactRepository->findAll();
+                return $this->json([
+                    'success' => true,
+                    'data' => $this->normalizeContacts($contacts, $withImageUrls)
+                ], Response::HTTP_OK);
+            }
+
+            return $this->json(
+                ['success' => false, 'message' => 'Aucune donnée ne correspond'],
+                Response::HTTP_BAD_REQUEST
+            );
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            return $this->json(['error' => 'Erreur serveur'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
-     * Vérifie si une chaîne base64 contient une image JPEG valide
-     *
-     * @param string $base64Image L'image encodée en base64
-     * @return bool True si l'image est un JPEG valide, False sinon
+     * Génère une URL pour l'image d'un contact
+     */
+    private function getContactImageUrl(string $filename): ?string
+    {
+        try {
+            if (empty($filename)) {
+                return null;
+            }
+
+            // Vérifier si le fichier existe
+            if (!$this->contactStorage->fileExists($filename)) {
+                $this->logger->warning('Le fichier image de contact n\'existe pas: ' . $filename);
+                return null;
+            }
+
+            // Générer une URL pour l'image
+            return $this->generateUrl(
+                'app_contactapp_contact_image_get',
+                ['filename' => $filename],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la génération de l\'URL de l\'image: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Normalise un contact et inclut les URLs des images si demandé
+     */
+    private function normalizeContact(Contact $contact, bool $withImageUrls = false): array
+    {
+        $normalizedContact = [
+            'uuid' => $contact->getUuid(),
+            'firstname' => $contact->getFirstname(),
+            'lastname' => $contact->getLastname(),
+            'companyName' => $contact->getCompanyName(),
+            'email' => $contact->getEmail(),
+            'title' => $contact->getTitle(),
+            'description' => $contact->getDescription(),
+            'tags' => $contact->getTags(),
+            'createdAt' => $contact->getCreatedAt()->format('d-m-Y H:i:s'),
+        ];
+
+        // Récupérer les noms des fichiers d'images
+        $pictureFilenames = $contact->getPictures() ?? [];
+
+        if ($withImageUrls && !empty($pictureFilenames)) {
+            $pictureUrls = [];
+
+            foreach ($pictureFilenames as $filename) {
+                $imageUrl = $this->getContactImageUrl($filename);
+                if ($imageUrl) {
+                    $pictureUrls[] = [
+                        'filename' => $filename,
+                        'url' => $imageUrl
+                    ];
+                }
+            }
+
+            $normalizedContact['pictures'] = $pictureUrls;
+        } else {
+            $normalizedContact['pictures'] = $pictureFilenames;
+        }
+
+        return $normalizedContact;
+    }
+
+    /**
+     * Normalise un tableau de contacts
+     */
+    private function normalizeContacts(array $contacts, bool $withImageUrls = false): array
+    {
+        $contactArray = [];
+        foreach ($contacts as $contact) {
+            $contactArray[] = $this->normalizeContact($contact, $withImageUrls);
+        }
+        return $contactArray;
+    }
+
+    /**
+     * Route pour servir les images des contacts
+     */
+    #[Route('/api/contact/image/{filename}', name: 'app_contact_image_get', methods: ['GET'])]
+    #[IsGranted('PUBLIC_ACCESS')]
+    public function getContactImage(string $filename): Response
+    {
+        try {
+            // Vérifier si le fichier existe
+            if (!$this->contactStorage->fileExists($filename)) {
+                return new Response('Image non trouvée', Response::HTTP_NOT_FOUND);
+            }
+
+            // Récupérer le contenu du fichier
+            $fileContent = $this->contactStorage->read($filename);
+
+            // Déterminer le type MIME
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($fileContent) ?: 'application/octet-stream';
+
+            // Créer la réponse avec les en-têtes appropriés
+            $response = new Response($fileContent);
+            $response->headers->set('Content-Type', $mimeType);
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $filename . '"');
+
+            // Ajouter des en-têtes de cache pour améliorer les performances
+            $response->setPublic();
+            $response->setMaxAge(3600); // Cache pour 1 heure
+            $response->headers->addCacheControlDirective('must-revalidate');
+
+            return $response;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la récupération de l\'image de contact: ' . $e->getMessage());
+            return new Response('Erreur lors de la récupération de l\'image', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Valide si une image JPEG est valide (méthode existante)
      */
     private function isValidJpegImage(string $base64Image): bool
     {
@@ -199,28 +349,5 @@ final class ContactController extends AbstractController
         imagedestroy($image);
 
         return $isJpeg;
-    }
-
-    private function normalizeContact(Contact $contact): array
-    {
-        return [
-            'uuid' => $contact->getUuid(),
-            'firstname' => $contact->getFirstname(),
-            'lastname' => $contact->getLastname(),
-            'companyName' => $contact->getCompanyName(),
-            'email' => $contact->getEmail(),
-            'title' => $contact->getTitle(),
-            'description' => $contact->getDescription(),
-            'tags' => $contact->getTags(),
-        ];
-    }
-
-    private function normalizeContacts(array $contacts): array
-    {
-        $contactArray = [];
-        foreach ($contacts as $contact) {
-            $contactArray[] = $this->normalizeContact($contact);
-        }
-        return $contactArray;
     }
 }

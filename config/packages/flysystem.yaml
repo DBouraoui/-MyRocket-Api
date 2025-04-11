@@ -4,3 +4,7 @@ flysystem:
             adapter: 'local'
             options:
                 directory: '%kernel.project_dir%/var/pictures/contact'
+        project.storage:
+            adapter: 'local'
+            options:
+                directory: '%kernel.project_dir%/var/pictures/project'

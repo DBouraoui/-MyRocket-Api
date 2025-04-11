@@ -8,11 +8,6 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 class RegisterDTO
 {
     use User;
-    #[NotBlank(message: "Le prénom ne peut pas être vide.")]
-    public ?string $firstname;
-
-    #[NotBlank(message: "Le nom ne peut pas être vide.")]
-    public ?string $lastname;
 
     #[NotBlank(message: "L'email ne peut pas être vide.")]
     public ?string $email;
