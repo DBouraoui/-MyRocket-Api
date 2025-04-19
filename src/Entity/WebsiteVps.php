@@ -41,7 +41,7 @@ class WebsiteVps
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToOne(inversedBy: 'websiteVps', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'websiteVps', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Website $website = null;
 
@@ -58,6 +58,13 @@ class WebsiteVps
     #[ORM\PreUpdate]
     public function update() {
         $this->updatedAt = new \DateTimeImmutable('now');
+            $encryptionService = new EncryptionService();
+        if (!empty($this->password)) {
+            $this->password = $encryptionService->encrypt($this->password);
+        }
+        if (!empty($this->publicKey)) {
+            $this->publicKey = $encryptionService->encrypt($this->publicKey);
+        }
     }
 
     public function getId(): ?int

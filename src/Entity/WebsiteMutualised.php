@@ -37,7 +37,7 @@ class WebsiteMutualised
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToOne(inversedBy: 'websiteMutualised', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'websiteMutualised', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Website $website = null;
 
@@ -53,6 +53,11 @@ class WebsiteMutualised
     #[ORM\PreUpdate]
     public function update() {
         $this->updatedAt = new \DateTimeImmutable('now');
+        $encryptionService = new EncryptionService();
+
+        if (!empty($this->password)) {
+            $this->password = $encryptionService->encrypt($this->password);
+        }
     }
 
     public function getId(): ?int
