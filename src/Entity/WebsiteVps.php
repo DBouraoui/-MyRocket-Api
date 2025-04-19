@@ -32,9 +32,6 @@ class WebsiteVps
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    #[ORM\Column(type: Types::TEXT)]
-    private ?string $ssh = null;
-
     #[ORM\Column(length: 255)]
     private ?string $publicKey = null;
 
@@ -125,18 +122,6 @@ class WebsiteVps
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
-        return $this;
-    }
-
-    public function getSsh(): ?string
-    {
-        return $this->ssh;
-    }
-
-    public function setSsh(string $ssh): static
-    {
-        $this->ssh = $ssh;
 
         return $this;
     }

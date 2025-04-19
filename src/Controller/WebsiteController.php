@@ -4,8 +4,6 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\Website;
-use App\Entity\WebsiteMutualised;
-use App\Entity\WebsiteVps;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -51,7 +49,7 @@ final class WebsiteController extends AbstractController
                 }
             }
 
-            $user = $this->userRepository->findOneBy(['uuid' => $data['uuid']]);
+            $user = $this->userRepository->findOneBy(['uuid' => $data['uuidUser']]);
 
             $website = new Website();
             $website->setTitle($data['title']);
@@ -60,31 +58,6 @@ final class WebsiteController extends AbstractController
             $website->setStatus($data['status']);
             $website->setType($data['type']);
             $website->setUser($user);
-
-            switch ($data['type']) {
-                case 'mutualised':
-                    $requiredMutualisedFields = ['address', 'port', 'password', 'username'];
-                    foreach ($requiredMutualisedFields as $field) {
-                        if (!isset($data[$field])) {
-                            return $this->json(['success' => false, 'message' => "Missing required field for mutualised type: $field"], Response::HTTP_BAD_REQUEST);
-                        }
-                    }
-                    $this->setCredentialsMutualised($website, $data);
-                    break;
-
-                case 'vps':
-                    $requiredVpsFields = ['address', 'port', 'password', 'publicKey', 'ssh', 'username'];
-                    foreach ($requiredVpsFields as $field) {
-                        if (!isset($data[$field])) {
-                            return $this->json(['success' => false, 'message' => "Missing required field for VPS type: $field"], Response::HTTP_BAD_REQUEST);
-                        }
-                    }
-                    $this->setCredentialsVps($website, $data);
-                    break;
-
-                default:
-                    break;
-            }
 
             // Valider l'entité avant de la persister
             $errors = $this->validator->validate($website);
@@ -247,61 +220,5 @@ final class WebsiteController extends AbstractController
             $websitesArray[] = $this->normalizeWebsite($website);
         }
         return $websitesArray;
-    }
-
-    /**
-     * Configure les credentials VPS pour un website
-     *
-     * @param Website $website L'entité website à configurer
-     * @param array $data Les données envoyées par le client
-     * @throws \Exception Si une erreur se produit lors de la configuration
-     */
-    private function setCredentialsVps(Website $website, array $data): void
-    {
-        try {
-            $websiteVps = new WebsiteVps();
-            $websiteVps->setAddress($data['address']);
-            $websiteVps->setPort($data['port']);
-            $websiteVps->setPassword($data['password']);
-            $websiteVps->setPublicKey($data['publicKey']);
-            $websiteVps->setSsh($data['ssh']);
-            $websiteVps->setUsername($data['username']);
-
-            // Persist the WebsiteVps entity first if needed
-            $this->entityManager->persist($websiteVps);
-
-            // Assign the WebsiteVps to the Website
-            $website->setWebsiteVps($websiteVps);
-        } catch(\Exception $e) {
-            $this->logger->error('Error creating VPS credentials: ' . $e->getMessage());
-            throw new \Exception('Error creating VPS credentials: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Configure les credentials Mutualisées pour un website
-     *
-     * @param Website $website L'entité website à configurer
-     * @param array $data Les données envoyées par le client
-     * @throws \Exception Si une erreur se produit lors de la configuration
-     */
-    private function setCredentialsMutualised(Website $website, array $data): void
-    {
-        try {
-            $websiteMutualised = new WebsiteMutualised();
-            $websiteMutualised->setAddress($data['address']);
-            $websiteMutualised->setPort($data['port']);
-            $websiteMutualised->setPassword($data['password']);
-            $websiteMutualised->setUsername($data['username']);
-
-            // Persist the WebsiteMutualised entity first if needed
-            $this->entityManager->persist($websiteMutualised);
-
-            // Assign the WebsiteMutualised to the Website
-            $website->setWebsiteMutualised($websiteMutualised);
-        } catch(\Exception $e) {
-            $this->logger->error('Error creating mutualised credentials: ' . $e->getMessage());
-            throw new \Exception('Error creating mutualised credentials: ' . $e->getMessage());
-        }
     }
 }
