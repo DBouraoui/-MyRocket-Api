@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\WebsiteMutualised;
 use App\Repository\WebsiteMutualisedRepository;
 use App\Repository\WebsiteRepository;
+use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +18,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/api/website/mutualised', name: 'app_website_mutualised')]
 final class WebsiteMutualisedController extends AbstractController
 {
-    public function __construct(private readonly LoggerInterface $logger, private readonly WebsiteRepository $websiteRepository, private readonly EntityManagerInterface $entityManager, private readonly WebsiteMutualisedRepository $websiteMutualisedRepository)
+    public const POST_REQUIRED_FILDS =['uuidWebsite', 'username', 'password', 'address', 'port'];
+
+    public function __construct
+    (
+        private readonly LoggerInterface        $logger,
+        private readonly WebsiteRepository      $websiteRepository,
+        private readonly EntityManagerInterface $entityManager, private readonly WebsiteService $websiteService,
+    )
     {
     }
 
@@ -29,41 +37,28 @@ final class WebsiteMutualisedController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                Throw new \Exception('Les données reçus sont vide',Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::EMPTY_DATA,Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $requiredFields = ['uuidWebsite', 'username', 'password', 'address', 'port'];
-            foreach ($requiredFields as $field) {
-                if (empty($data[$field])) {
-                    Throw new \Exception("Le champ '{$field}' est requis", Response::HTTP_UNPROCESSABLE_ENTITY);
-                }
-            }
+            $this->checkRequiredFields(self::POST_REQUIRED_FILDS,$data);
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuidWebsite']]);
 
             if (empty($website)) {
-                Throw new \Exception("Aucun website pour trouvé", Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             if (!empty($website->getWebsiteVps()) || !empty($website->getWebsiteMutualised())) {
-                Throw new \Exception("Une configuration existe déja pour ce  site web", Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::CONFIGURATION_ALREADY_EXISTS, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             if (empty($website)) {
-                Throw new \Exception('Aucun website trouvés',Response::HTTP_NOT_FOUND);
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND,Response::HTTP_NOT_FOUND);
             }
 
-            $websiteMutualised = new WebsiteMutualised();
-            $websiteMutualised->setUsername($data['username']);
-            $websiteMutualised->setPassword($data['password']);
-            $websiteMutualised->setAddress($data['address']);
-            $websiteMutualised->setPort($data['port']);
-            $websiteMutualised->setWebsite($website);
+           $mutualisedWebsite = $this->websiteService->createMutualisedConfiguration($data,$website);
 
-            $this->entityManager->persist($websiteMutualised);
-            $this->entityManager->flush();
-
-            return $this->json([],Response::HTTP_OK);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE,Response::HTTP_OK);
 
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
@@ -82,22 +77,23 @@ final class WebsiteMutualisedController extends AbstractController
              $data = json_decode($request->getContent(), true);
 
              if (empty($data)) {
-                 throw new \Exception("Les données reçues sont vides", Response::HTTP_UNPROCESSABLE_ENTITY);
+                 throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_UNPROCESSABLE_ENTITY);
              }
 
              if (empty($data['uuidWebsite'])) {
-                 throw new \Exception("Le champ 'uuidWebsite' est requis", Response::HTTP_UNPROCESSABLE_ENTITY);
+                 throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_UNPROCESSABLE_ENTITY);
              }
 
              $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuidWebsite']]);
 
              if (empty($website)) {
-                 throw new \Exception("Aucun website trouvé", Response::HTTP_NOT_FOUND);
+                 throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
              }
 
              $websiteMutualised = $website->getWebsiteMutualised();
+
              if (empty($websiteMutualised)) {
-                 Throw new \Exception("Aucune configuration mutualisé trouver pour ce website", Response::HTTP_NOT_FOUND);
+                 Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND, Response::HTTP_NOT_FOUND);
              }
 
              $allowedFields = ['username', 'password', 'address', 'port'];
@@ -113,10 +109,9 @@ final class WebsiteMutualisedController extends AbstractController
 
              $this->entityManager->flush();
 
-             return $this->json([
-                 'success' => true,
-                 'message' => 'Configuration mise à jour avec succès'
-             ], Response::HTTP_OK);
+             return $this->json(
+                 WebsiteService::SUCCESS_RESPONSE
+             , Response::HTTP_OK);
          } catch (\Exception $e) {
              $this->logger->error('Erreur lors de la mise à jour: ' . $e->getMessage(), [
                  'trace' => $e->getTraceAsString()
@@ -135,25 +130,25 @@ final class WebsiteMutualisedController extends AbstractController
     public function delete($uuid) {
         try {
             if (empty($uuid)) {
-                Throw new \Exception('Le uuid est vide', Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
            $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
 
             if (empty($website)) {
-                Throw new \Exception("Aucun website trouver");
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
            $websiteMutualised = $website->getWebsiteMutualised();
 
             if (empty($websiteMutualised)) {
-                Throw new \Exception("Aucune configuration mutualised trouvé",Response::HTTP_NOT_FOUND);
+                Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND,Response::HTTP_NOT_FOUND);
             }
 
             $this->entityManager->remove($websiteMutualised);
             $this->entityManager->flush();
 
-            return $this->json(['success'=>true],Response::HTTP_OK);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE,Response::HTTP_OK);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()],$e->getCode());

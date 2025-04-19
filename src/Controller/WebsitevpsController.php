@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\WebsiteVps;
 use App\Repository\WebsiteRepository;
 use App\Repository\WebsiteVpsRepository;
+use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +18,16 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/api/website/vps', name: 'app_websitevps')]
 final class WebsitevpsController extends AbstractController
 {
-    public function __construct(private readonly LoggerInterface $logger, private readonly WebsiteRepository $websiteRepository, private readonly EntityManagerInterface $entityManager, private readonly WebsiteVpsRepository $websiteVpsRepository)
+
+    public const POST_REQUIRED_FILEDS = ['uuidWebsite', 'username', 'password', 'address', 'port', 'publicKey'];
+
+    public function __construct
+    (
+        private readonly LoggerInterface        $logger,
+        private readonly WebsiteRepository      $websiteRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly WebsiteService $websiteService,
+    )
     {
     }
 
@@ -29,38 +39,24 @@ final class WebsitevpsController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                Throw new \Exception('Les données reçus sont vide',Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::EMPTY_DATA,Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $requiredFields = ['uuidWebsite', 'username', 'password', 'address', 'port', 'publicKey'];
-            foreach ($requiredFields as $field) {
-                if (empty($data[$field])) {
-                    Throw new \Exception("Le champ '{$field}' est requis", Response::HTTP_UNPROCESSABLE_ENTITY);
-                }
-            }
+           $this->checkRequiredFields(self::POST_REQUIRED_FILEDS, $data);
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuidWebsite']]);
 
             if (!empty($website->getWebsiteVps()) || !empty($website->getWebsiteMutualised())) {
-                Throw new \Exception("Une configuration existe déja pour ce  site web", Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::CONFIGURATION_ALREADY_EXISTS, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             if (empty($website)) {
-                Throw new \Exception('Aucun website trouvés',Response::HTTP_NOT_FOUND);
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND,Response::HTTP_NOT_FOUND);
             }
 
-            $websitevps = new Websitevps();
-            $websitevps->setUsername($data['username']);
-            $websitevps->setPassword($data['password']);
-            $websitevps->setAddress($data['address']);
-            $websitevps->setPort($data['port']);
-            $websitevps->setPublicKey($data['publicKey']);
-            $websitevps->setWebsite($website);
+            $websiteVPS = $this->websiteService->createVPSConfiguration($data,$website);
 
-            $this->entityManager->persist($websitevps);
-            $this->entityManager->flush();
-
-            return $this->json([],Response::HTTP_OK);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE,Response::HTTP_OK);
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -74,22 +70,22 @@ final class WebsitevpsController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                throw new \Exception("Les données reçues sont vides", Response::HTTP_UNPROCESSABLE_ENTITY);
+                throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             if (empty($data['uuidWebsite'])) {
-                throw new \Exception("Le champ 'uuidWebsite' est requis", Response::HTTP_UNPROCESSABLE_ENTITY);
+                throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuidWebsite']]);
 
             if (empty($website)) {
-                throw new \Exception("Aucun website trouvé", Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $websiteVPS = $website->getWebsiteVps();
             if (empty($websiteVPS)) {
-                Throw new \Exception("Aucune configuration mutualisé trouver pour ce website", Response::HTTP_NOT_FOUND);
+                Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $allowedFields = ['username', 'password', 'address', 'port', 'publicKey'];
@@ -105,10 +101,7 @@ final class WebsitevpsController extends AbstractController
 
             $this->entityManager->flush();
 
-            return $this->json([
-                'success' => true,
-                'message' => 'Configuration mise à jour avec succès'
-            ], Response::HTTP_OK);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de la mise à jour: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
@@ -124,25 +117,25 @@ final class WebsitevpsController extends AbstractController
     public function delete($uuid): JsonResponse {
         try {
             if (empty($uuid)) {
-                Throw new \Exception('Le uuid est vide', Response::HTTP_UNPROCESSABLE_ENTITY);
+                Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
 
             if (empty($website)) {
-                Throw new \Exception("Aucun website trouver");
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $websiteVPS = $website->getWebsiteVps();
 
             if (empty($websiteVPS)) {
-                Throw new \Exception("Aucune configuration vps trouvé",Response::HTTP_NOT_FOUND);
+                Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND,Response::HTTP_NOT_FOUND);
             }
 
             $this->entityManager->remove($websiteVPS);
             $this->entityManager->flush();
 
-            return new JsonResponse(['success'=>true],Response::HTTP_OK);
+            return new JsonResponse(WebsiteService::SUCCESS_RESPONSE,Response::HTTP_OK);
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);

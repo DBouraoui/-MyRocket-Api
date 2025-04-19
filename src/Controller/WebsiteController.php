@@ -3,28 +3,31 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Entity\Website;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
+use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/website', name: 'app_website_')]
 final class WebsiteController extends AbstractController
 {
+    public const POST_REQUIRED_FIELDS =['title', 'url', 'description', 'status', 'type', 'uuidUser'];
+
     public function __construct(
         private readonly LoggerInterface        $logger,
         private readonly EntityManagerInterface $entityManager,
         private readonly WebsiteRepository      $websiteRepository,
-        private readonly ValidatorInterface     $validator, private readonly UserRepository $userRepository,
+        private readonly UserRepository $userRepository,
+        private readonly WebsiteService $websiteService,
     ) {
     }
 
@@ -39,40 +42,20 @@ final class WebsiteController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                return $this->json(['success' => false, 'message' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
+                Throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
             }
 
-            $requiredFields = ['title', 'url', 'description', 'status', 'type'];
-            foreach ($requiredFields as $field) {
-                if (!isset($data[$field])) {
-                    return $this->json(['success' => false, 'message' => "Missing required field: $field"], Response::HTTP_BAD_REQUEST);
-                }
-            }
+            $this->checkRequiredFields(self::POST_REQUIRED_FIELDS, $data);
 
             $user = $this->userRepository->findOneBy(['uuid' => $data['uuidUser']]);
 
-            $website = new Website();
-            $website->setTitle($data['title']);
-            $website->setUrl($data['url']);
-            $website->setDescription($data['description']);
-            $website->setStatus($data['status']);
-            $website->setType($data['type']);
-            $website->setUser($user);
-
-            // Valider l'entité avant de la persister
-            $errors = $this->validator->validate($website);
-            if (count($errors) > 0) {
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[] = $error->getMessage();
-                }
-                return $this->json(['success' => false, 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
+            if (empty($user)) {
+                Throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
-            $this->entityManager->persist($website);
-            $this->entityManager->flush();
+            $website = $this->websiteService->createWebsite($data, $user);
 
-            return $this->json(['success' => true], Response::HTTP_CREATED);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
         } catch(\Exception $e) {
             $this->logger->error('Error creating website: ' . $e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -91,20 +74,20 @@ final class WebsiteController extends AbstractController
 
             if ($all) {
                 $websites = $user->getWebsites()->toArray();
-                $websiteArray = $this->normalizeWebsites($websites);
+                $websiteArray = $this->websiteService->normalizeWebsites($websites);
 
                 return $this->json($websiteArray, Response::HTTP_OK);
             } elseif ($uuid) {
                 $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
 
                 if (!$website) {
-                    return $this->json(['success' => false, 'message' => 'Website not found'], Response::HTTP_NOT_FOUND);
+                    Throw new Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
                 }
 
-                $websiteArray = $this->normalizeWebsite($website);
+                $websiteArray = $this->websiteService->normalizeWebsite($website);
                 return $this->json($websiteArray, Response::HTTP_OK);
             } else {
-                return $this->json(['success' => false, 'message' => 'Missing parameter: all or uuid'], Response::HTTP_BAD_REQUEST);
+               Throw new Exception(WebsiteService::MISSING_URL_PARAMETER, Response::HTTP_EXPECTATION_FAILED);
             }
         } catch(\Exception $e) {
             $this->logger->error('Error fetching websites: ' . $e->getMessage());
@@ -122,46 +105,35 @@ final class WebsiteController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                return $this->json(['success' => false, 'message' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
+                Throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
             }
 
             if (!isset($data['uuid'])) {
-                return $this->json(['success' => false, 'message' => 'Missing required field: uuid'], Response::HTTP_BAD_REQUEST);
+               Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
             }
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuid']]);
 
             if (!$website) {
-                return $this->json(['success' => false, 'message' => 'Website not found'], Response::HTTP_NOT_FOUND);
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $allowedProperties = [
-                'title' => 'setTitle',
-                'url' => 'setUrl',
-                'description' => 'setDescription',
-                'status' => 'setStatus',
-                'type' => 'setType'
+                'type', 'title', 'url', 'description', 'status', 'uuidUser'
             ];
 
-            foreach ($allowedProperties as $property => $setter) {
+            foreach ($allowedProperties as $property) {
+                $setter = 'set' . ucfirst($property);
                 if (isset($data[$property])) {
                     $website->$setter($data[$property]);
                 }
             }
 
-            // Valider l'entité avant de la mettre à jour
-            $errors = $this->validator->validate($website);
-            if (count($errors) > 0) {
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[] = $error->getMessage();
-                }
-                return $this->json(['success' => false, 'errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
-            }
+            $this->websiteService->validate($website);
 
             $this->entityManager->flush();
 
-            return $this->json(['success' => true], Response::HTTP_OK);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {
             $this->logger->error('Error updating website: ' . $e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -176,49 +148,22 @@ final class WebsiteController extends AbstractController
     public function delete(string $uuid): JsonResponse {
         try {
             if (empty($uuid)) {
-                return $this->json(['success' => false, 'message' => 'Invalid uuid'], Response::HTTP_BAD_REQUEST);
+                Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
             }
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
 
             if (!$website) {
-                return $this->json(['success' => false, 'message' => 'Website not found'], Response::HTTP_NOT_FOUND);
+               Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $this->entityManager->remove($website);
             $this->entityManager->flush();
 
-            return $this->json(['success' => true], Response::HTTP_OK);
+            return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {
             $this->logger->error('Error deleting website: ' . $e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Normalise une entité Website en tableau
-     */
-    private function normalizeWebsite(Website $website): array {
-        return [
-            "uuid" => $website->getUuid(),
-            "title" => $website->getTitle(),
-            "url" => $website->getUrl(),
-            "description" => $website->getDescription(),
-            "status" => $website->getStatus(),
-            "type" => $website->getType(),
-            "createdAt" => $website->getCreatedAt()?->format('m-d-Y'),
-            "updatedAt" => $website->getUpdatedAt()?->format('m-d-Y'),
-        ];
-    }
-
-    /**
-     * Normalise un tableau d'entités Website en tableau de tableaux
-     */
-    private function normalizeWebsites(array $websites): array {
-        $websitesArray = [];
-        foreach ($websites as $website) {
-            $websitesArray[] = $this->normalizeWebsite($website);
-        }
-        return $websitesArray;
     }
 }
