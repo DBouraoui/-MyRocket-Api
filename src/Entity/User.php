@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -65,6 +67,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $companyName = null;
+
+    /**
+     * @var Collection<int, Website>
+     */
+    #[ORM\OneToMany(targetEntity: Website::class, mappedBy: 'user')]
+    private Collection $websites;
+
+    /**
+     * @var Collection<int, WebsiteContract>
+     */
+    #[ORM\OneToMany(targetEntity: WebsiteContract::class, mappedBy: 'user')]
+    private Collection $WebsiteContract;
+
+    /**
+     * @var Collection<int, MaintenanceContract>
+     */
+    #[ORM\OneToMany(targetEntity: MaintenanceContract::class, mappedBy: 'user')]
+    private Collection $maintenanceContracts;
+
+    public function __construct()
+    {
+        $this->websites = new ArrayCollection();
+        $this->WebsiteContract = new ArrayCollection();
+        $this->maintenanceContracts = new ArrayCollection();
+    }
 
 
     public function getId(): ?int
@@ -283,6 +310,96 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCompanyName(?string $companyName): static
     {
         $this->companyName = $companyName;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Website>
+     */
+    public function getWebsites(): Collection
+    {
+        return $this->websites;
+    }
+
+    public function addWebsite(Website $website): static
+    {
+        if (!$this->websites->contains($website)) {
+            $this->websites->add($website);
+            $website->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWebsite(Website $website): static
+    {
+        if ($this->websites->removeElement($website)) {
+            // set the owning side to null (unless already changed)
+            if ($website->getUser() === $this) {
+                $website->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, WebsiteContract>
+     */
+    public function getWebsiteContract(): Collection
+    {
+        return $this->WebsiteContract;
+    }
+
+    public function addWebsiteContract(WebsiteContract $WebsiteContract): static
+    {
+        if (!$this->WebsiteContract->contains($WebsiteContract)) {
+            $this->WebsiteContract->add($WebsiteContract);
+            $WebsiteContract->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWebsitePayment(WebsiteContract $WebsiteContract): static
+    {
+        if ($this->WebsiteContract->removeElement($WebsiteContract)) {
+            // set the owning side to null (unless already changed)
+            if ($WebsiteContract->getUser() === $this) {
+                $WebsiteContract->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MaintenanceContract>
+     */
+    public function getMaintenanceContracts(): Collection
+    {
+        return $this->maintenanceContracts;
+    }
+
+    public function addMaintenanceContract(MaintenanceContract $maintenanceContract): static
+    {
+        if (!$this->maintenanceContracts->contains($maintenanceContract)) {
+            $this->maintenanceContracts->add($maintenanceContract);
+            $maintenanceContract->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMaintenanceContract(MaintenanceContract $maintenanceContract): static
+    {
+        if ($this->maintenanceContracts->removeElement($maintenanceContract)) {
+            // set the owning side to null (unless already changed)
+            if ($maintenanceContract->getUser() === $this) {
+                $maintenanceContract->setUser(null);
+            }
+        }
 
         return $this;
     }

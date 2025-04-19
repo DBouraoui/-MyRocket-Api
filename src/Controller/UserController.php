@@ -8,6 +8,7 @@ use App\DTO\user\UserPutDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use IntlDateFormatter;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -166,7 +167,6 @@ final class UserController extends AbstractController
             unset($data['uuid']);
 
             if (isset($data['email']) && $data['email'] !== $customer->getEmail()) {
-                // Vérifier si l'email est déjà utilisé par un autre utilisateur
                 $existingUser = $this->userRepository->findOneBy(['email' => $data['email']]);
                 if ($existingUser && $existingUser->getUuid() !== $customer->getUuid()) {
                     return $this->json(['error' => 'Cet email est déjà utilisé par un autre compte'], Response::HTTP_CONFLICT);
@@ -203,7 +203,7 @@ final class UserController extends AbstractController
 
     #[Route( path: '/{uuid}' ,methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function delete(string $uuid, Request $request): JsonResponse
+    public function delete(string $uuid): JsonResponse
     {
         try {
             if (empty($uuid)) {
@@ -250,8 +250,58 @@ final class UserController extends AbstractController
         }
     }
 
+    #[Route( path: '/me' ,methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function me(#[CurrentUser]User $user): JsonResponse {
+        try {
+            return $this->json($this->normalizeUserObject($user), Response::HTTP_OK);
+        }catch (\Exception $e) {
+            $this->logger->error("Erreur serveur interne", ['error' => $e->getMessage()]);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route( methods: ['PATCH'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function changePassword(Request $request, #[CurrentUser]User $user): JsonResponse {
+        try {
+            $data = json_decode($request->getContent(), true);
+
+            if (!in_array('ROLE_ADMIN', $user->getRoles()))
+            {
+                if ($user->getUuid() !== $data['uuid']) {
+                    throw new \Exception("Utilisateur incorrect");
+                }
+            }
+
+            $userPatch = $this->userRepository->findOneBy(['uuid'=>$user->getUuid()]);
+
+            if (!$this->passwordHasher->isPasswordValid($userPatch, $data['oldPassword'])) {
+                return $this->json(['error' => 'Mot de passe incorrect'], Response::HTTP_NOT_FOUND);
+            }
+
+            $userPatch->setPassword($this->passwordHasher->hashPassword($userPatch, $data['newPassword']));
+
+            $this->entityManager->flush();
+
+            return $this->json(['success' => true], Response::HTTP_OK);
+        }  catch (\Exception $e) {
+            $this->logger->error("Erreur serveur interne", ['error' => $e->getMessage()]);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private function normalizeUserObject(User $user): array
     {
+        $formatter = new \IntlDateFormatter(
+            'fr_FR',
+            IntlDateFormatter::FULL,
+            IntlDateFormatter::NONE,
+            null,
+            null,
+            'EEEE d MMMM YYYY'
+        );
+
         return [
             'uuid' => $user->getUuid(),
             'firstname' => $user->getFirstname(),
@@ -263,6 +313,8 @@ final class UserController extends AbstractController
             'country' => $user->getCountry(),
             'address' => $user->getAddress(),
             'phone' => $user->getPhone(),
+            'createdAt' => $formatter->format($user->getCreatedAt()),
+            'updatedAt' => $formatter->format($user->getUpdatedAt()),
             'role'=> $user->getRoles()[0]
         ];
     }

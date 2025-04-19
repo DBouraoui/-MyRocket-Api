@@ -25,7 +25,9 @@
         "symfony/uid": "7.2.*",
         "symfony/validator": "7.2.*",
         "symfony/yaml": "7.2.*",
-      "ext-fileinfo": "*"
+      "ext-fileinfo": "*",
+      "ext-intl": "*",
+      "ext-openssl": "*"
     },
     "config": {
         "allow-plugins": {

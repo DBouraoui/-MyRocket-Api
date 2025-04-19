@@ -297,8 +297,8 @@ final class ProjectsToDiplayController extends AbstractController
             'description' => $projectsToDisplay->getDescription(),
             'link' => $projectsToDisplay->getLink(),
             'tags' => $projectsToDisplay->getTags(),
-            'createdAt' => $projectsToDisplay->getCreatedAt()->format('d-m-Y H:i:s'),
-            'updatedAt' => $projectsToDisplay->getUpdatedAt()->format('d-m-Y H:i:s'),
+            'createdAt' => $projectsToDisplay->getCreatedAt()->format('d-m-Y'),
+            'updatedAt' => $projectsToDisplay->getUpdatedAt()->format('d-m-Y'),
         ];
 
         // Récupérer les noms de fichiers d'images

@@ -2,7 +2,6 @@
 
 namespace App\traits;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping\Id;
 use Symfony\Component\Validator\Constraints\DateTime;
 use Symfony\Component\Validator\Constraints\Email;
