@@ -2,8 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\WebsiteMutualised;
-use App\Repository\WebsiteMutualisedRepository;
 use App\Repository\WebsiteRepository;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class WebsiteMutualisedController extends AbstractController
 {
     public const POST_REQUIRED_FILDS =['uuidWebsite', 'username', 'password', 'address', 'port'];
+    public const PUT_ALLOW_FIELDS = ['username', 'password', 'address', 'port'];
 
     public function __construct
     (
@@ -96,9 +95,7 @@ final class WebsiteMutualisedController extends AbstractController
                  Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND, Response::HTTP_NOT_FOUND);
              }
 
-             $allowedFields = ['username', 'password', 'address', 'port'];
-
-             foreach ($allowedFields as $field) {
+             foreach (self::PUT_ALLOW_FIELDS as $field) {
                  if (isset($data[$field])) {
                      $setter = 'set' . ucfirst($field);
                      if (method_exists($websiteMutualised, $setter)) {

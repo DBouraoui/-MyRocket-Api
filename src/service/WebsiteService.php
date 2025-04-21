@@ -14,8 +14,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class WebsiteService
 {
     use ExeptionTrait;
-
-    public const WEBSITE_NOT_FOUND = "Website not found";
     public const CONFIGURATION_NOT_FOUND = "Configuration not found";
     public const CONFIGURATION_ALREADY_EXISTS = "Configuration already exists";
     public const MISSING_URL_PARAMETER = "Missing URL parameter";

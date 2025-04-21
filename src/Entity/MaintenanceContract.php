@@ -4,8 +4,10 @@ namespace App\Entity;
 
 use App\Repository\MaintenanceContractRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: MaintenanceContractRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class MaintenanceContract
 {
     #[ORM\Id]
@@ -31,7 +33,7 @@ class MaintenanceContract
     #[ORM\ManyToOne(inversedBy: 'maintenanceContracts')]
     private ?User $user = null;
 
-    #[ORM\OneToOne(inversedBy: 'maintenanceContract', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'maintenanceContract', cascade: ['persist'])]
     private ?Website $website = null;
 
     #[ORM\Column(length: 30)]
@@ -45,6 +47,12 @@ class MaintenanceContract
 
     #[ORM\Column]
     private ?\DateTimeImmutable $nextPaymentAt = null;
+
+    #[ORM\PrePersist]
+    public function init() {
+        $this->createdAt = new \DateTimeImmutable('now');
+        $this->uuid = Uuid::v4();
+    }
 
     public function getId(): ?int
     {
