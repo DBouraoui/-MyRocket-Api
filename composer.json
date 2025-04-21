@@ -6,8 +6,11 @@
     "require": {
         "php": ">=8.2",
         "ext-ctype": "*",
+        "ext-fileinfo": "*",
         "ext-gd": "*",
         "ext-iconv": "*",
+        "ext-intl": "*",
+        "ext-openssl": "*",
         "doctrine/dbal": "^3",
         "doctrine/doctrine-bundle": "^2.14",
         "doctrine/doctrine-migrations-bundle": "^3.4",
@@ -19,15 +22,15 @@
         "symfony/dotenv": "7.2.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.2.*",
+        "symfony/google-mailer": "7.2.*",
+        "symfony/mailer": "7.2.*",
         "symfony/monolog-bundle": "^3.10",
         "symfony/runtime": "7.2.*",
         "symfony/security-bundle": "7.2.*",
+        "symfony/twig-bundle": "7.2.*",
         "symfony/uid": "7.2.*",
         "symfony/validator": "7.2.*",
-        "symfony/yaml": "7.2.*",
-      "ext-fileinfo": "*",
-      "ext-intl": "*",
-      "ext-openssl": "*"
+        "symfony/yaml": "7.2.*"
     },
     "config": {
         "allow-plugins": {

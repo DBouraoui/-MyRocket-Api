@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
+use App\service\EmailService;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -26,8 +27,8 @@ final class WebsiteController extends AbstractController
         private readonly LoggerInterface        $logger,
         private readonly EntityManagerInterface $entityManager,
         private readonly WebsiteRepository      $websiteRepository,
-        private readonly UserRepository $userRepository,
-        private readonly WebsiteService $websiteService,
+        private readonly UserRepository         $userRepository,
+        private readonly WebsiteService         $websiteService, private readonly EmailService $emailService,
     ) {
     }
 
@@ -163,6 +164,60 @@ final class WebsiteController extends AbstractController
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {
             $this->logger->error('Error deleting website: ' . $e->getMessage());
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[route(path: '/credentials/{uuid}', name: '_get_credentials', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED')]
+    public function getCredentials($uuid,#[CurrentUser]User $user): JsonResponse {
+        try {
+            if (empty($uuid)) {
+                Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
+            }
+
+            $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
+
+            if (!$website) {
+                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
+            }
+
+            if ($website->getUser() !== $user) {
+                Throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
+            }
+
+            if (empty($website->getWebsiteVps()) && empty($website->getWebsiteMutualised())) {
+                Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND, Response::HTTP_NOT_FOUND);
+            }
+
+            if ($website->getWebsiteVps()) {
+
+                $configuration = [
+                    'address'=> $website->getWebsiteVps()->getAddress(),
+                    'port'=> $website->getWebsiteVps()->getPort(),
+                    'username'=> $website->getWebsiteVps()->getUsername(),
+                    'password'=> $website->getWebsiteVps()->getPassword()
+                ];
+            }
+
+            if ($website->getWebsiteMutualised()) {
+                $configuration = [
+                    'address'=> $website->getWebsiteMutualised()->getAddress(),
+                    'port'=> $website->getWebsiteMutualised()->getPort(),
+                    'username'=> $website->getWebsiteMutualised()->getUsername(),
+                    'password'=> $website->getWebsiteMutualised()->getPassword()
+                ];
+            }
+
+            $this->emailService->generate($user, 'Identifiant personelle',[
+                'template'=> 'credentials',
+                'urlWebsite'=>$website->getUrl(),
+                'configuration'=> $configuration
+            ]);
+
+            return new JsonResponse(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
+        } catch(\Exception $e) {
+            $this->logger->error('Error fetching credentials: ' . $e->getMessage());
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
