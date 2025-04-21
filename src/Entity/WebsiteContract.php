@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\WebsiteContractRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -51,6 +53,17 @@ class WebsiteContract
 
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    /**
+     * @var Collection<int, Transaction>
+     */
+    #[ORM\OneToMany(targetEntity: Transaction::class, mappedBy: 'websitePaiment')]
+    private Collection $transactions;
+
+    public function __construct()
+    {
+        $this->transactions = new ArrayCollection();
+    }
 
     #[ORM\PrePersist]
     public function init() {
@@ -209,6 +222,36 @@ class WebsiteContract
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Transaction>
+     */
+    public function getTransactions(): Collection
+    {
+        return $this->transactions;
+    }
+
+    public function addTransaction(Transaction $transaction): static
+    {
+        if (!$this->transactions->contains($transaction)) {
+            $this->transactions->add($transaction);
+            $transaction->setWebsitePaiment($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTransaction(Transaction $transaction): static
+    {
+        if ($this->transactions->removeElement($transaction)) {
+            // set the owning side to null (unless already changed)
+            if ($transaction->getWebsitePaiment() === $this) {
+                $transaction->setWebsitePaiment(null);
+            }
+        }
 
         return $this;
     }
