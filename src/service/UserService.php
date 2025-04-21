@@ -26,16 +26,16 @@ class UserService
         try {
 
             $user = new User();
-            $data['firstname'] ? $user->setFirstname($data['firstname']) : null;
-            $data['lastname'] ? $user->setLastname($data['lastname']) : null;
-            $data['companyName'] ? $user->setCompanyName($data['companyName']) : null;
-            $user->setEmail($data['email']);
-            $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
-            $user->setPostCode($data['postCode']);
-            $user->setCity($data['city']);
-            $user->setCountry($data['country']);
-            $user->setAddress($data['address']);
-            $user->setPhone($data['phone']);
+            $data->firstname ? $user->setFirstname($data->firstname) : null;
+            $data->lastname ? $user->setLastname($data->lastname) : null;
+            $data->companyName ? $user->setCompanyName($data->companyName) : null;
+            $user->setEmail($data->email);
+            $user->setPassword($this->passwordHasher->hashPassword($user, $data->password));
+            $user->setPostCode($data->postCode);
+            $user->setCity($data->city);
+            $user->setCountry($data->country);
+            $user->setAddress($data->address);
+            $user->setPhone($data->phone);
 
             $this->entityManager->persist($user);
             $this->entityManager->flush();

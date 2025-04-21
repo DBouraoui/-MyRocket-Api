@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue chez MyRocket</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .rocket-icon {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .welcome-message h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .welcome-message p {
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        .card {
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-info {
+            list-style-type: none;
+        }
+
+        .login-info li {
+            padding: 12px 0;
+            border-bottom: 1px dashed #e0e0e0;
+            display: grid;
+            grid-template-columns: 150px 1fr;
+        }
+
+        .login-info li:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .value {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #edf2f7;
+            padding: 5px 10px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .value:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .login-button {
+            display: block;
+            background-color: var(--secondary-color);
+            color: black;
+            text-align: center;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 30px 0;
+            transition: background-color 0.3s;
+        }
+
+        .login-button:hover {
+            background-color: #2980b9;
+        }
+
+        .login-button i {
+            margin-right: 10px;
+        }
+
+        .tip-box {
+            background-color: rgba(39, 174, 96, 0.1);
+            border-left: 4px solid var(--success-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+        }
+
+        .tip-box-title {
+            font-weight: 600;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .next-steps {
+            margin-top: 30px;
+        }
+
+        .next-steps h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .steps-list {
+            list-style-type: none;
+        }
+
+        .steps-list li {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .steps-list li i {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            color: var(--secondary-color);
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #eaeaea;
+            color: #666;
+        }
+
+        .footer p {
+            margin-bottom: 10px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-links a {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .social-links a:hover {
+            color: var(--secondary-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .login-info li {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .header h1 {
+                font-size: 1.6rem;
+            }
+
+            .rocket-icon {
+                font-size: 1.8rem;
+                top: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <i class="fas fa-rocket rocket-icon"></i>
+        <h1>Heureux de vous avoir parmi nos clients !</h1>
+        <p>Bienvenue dans l'aventure MyRocket</p>
+    </div>
+
+    <div class="content">
+        <div class="welcome-message">
+            <h2>Votre compte est prêt !</h2>
+            <p>Vous êtes désormais client de la plateforme MyRocket</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-user-check"></i> Vos informations de connexion
+            </div>
+            <ul class="login-info">
+                <li>
+                    <span class="label">Nom d'utilisateur</span>
+                    <div class="value">
+                        {{ emailUser }}
+                    </div>
+                </li>
+                <li>
+                    <span class="label">Mot de passe</span>
+                    <div class="value">
+                        {{ passwordUser }}
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <a href="{{ loginUrl }}" class="login-button">
+            <i class="fas fa-sign-in-alt"></i> Accéder à votre espace client
+        </a>
+
+        <div class="tip-box">
+            <div class="tip-box-title">
+                <i class="fas fa-lightbulb"></i> Astuce importante
+            </div>
+            <p>Pensez à changer votre mot de passe lors de votre première connexion sur le site !</p>
+        </div>
+
+        <div class="next-steps">
+            <h3>Prochaines étapes recommandées</h3>
+            <ul class="steps-list">
+                <li>
+                    <i class="fas fa-lock"></i>
+                    <strong>Sécurisez votre compte</strong> - Changez votre mot de passe et configurez les options de sécurité.
+                </li>
+                <li>
+                    <i class="fas fa-user-cog"></i>
+                    <strong>Complétez votre profil</strong> - Ajoutez vos informations personnelles et professionnelles.
+                </li>
+                <li>
+                    <i class="fas fa-cogs"></i>
+                    <strong>Explorez les fonctionnalités</strong> - Découvrez les outils et services disponibles.
+                </li>
+                <li>
+                    <i class="fas fa-headset"></i>
+                    <strong>Besoin d'aide ?</strong> - Notre équipe support est disponible pour répondre à vos questions.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 MyRocket - Tous droits réservés</p>
+        <p>Notre équipe est disponible pour vous accompagner dans votre expérience</p>
+    </div>
+</div>
+</body>
+</html>

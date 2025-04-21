@@ -7,6 +7,7 @@ use App\DTO\user\UserDeleteDTO;
 use App\DTO\user\UserPutDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\service\EmailService;
 use App\service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -25,11 +26,11 @@ final class UserController extends AbstractController
 {
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface $logger,
-        private readonly ValidatorInterface $validator,
-        private readonly UserRepository $userRepository,
-        private readonly UserService  $userService,
+        private readonly EntityManagerInterface      $entityManager,
+        private readonly LoggerInterface             $logger,
+        private readonly ValidatorInterface          $validator,
+        private readonly UserRepository              $userRepository,
+        private readonly UserService                 $userService, private readonly EmailService $emailService,
     ) {
 
     }
@@ -61,7 +62,16 @@ final class UserController extends AbstractController
                 throw new \Exception(UserService::USER_ALREADY_EXIST, Response::HTTP_NOT_FOUND);
             }
 
-            $this->userService->createUser($registerDTO);
+           $user = $this->userService->createUser($registerDTO);
+
+            $context = [
+                'template'=>'register',
+                'emailUser'=>$user->getEmail(),
+                'passwordUser'=>$registerDTO->password,
+                'loginUrl'=> 'http://login.fr'
+            ];
+
+            $this->emailService->generate($user,'Rendez vous sur MyRocket !',$context);
 
             return $this->json(UserService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
 
