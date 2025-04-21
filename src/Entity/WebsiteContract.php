@@ -4,8 +4,10 @@ namespace App\Entity;
 
 use App\Repository\WebsiteContractRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: WebsiteContractRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class WebsiteContract
 {
     #[ORM\Id]
@@ -49,6 +51,18 @@ class WebsiteContract
 
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\PrePersist]
+    public function init() {
+        $this->createdAt = new \DateTimeImmutable('now');
+        $this->updatedAt = new \DateTimeImmutable('now');
+        $this->uuid = Uuid::v4();
+    }
+
+    #[ORM\PreUpdate]
+    public function update() {
+        $this->updatedAt = new \DateTimeImmutable('now');
+    }
 
     public function getId(): ?int
     {

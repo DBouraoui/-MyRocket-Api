@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/maintenance/contract', name: 'app_maintenance_contract')]
 final class MaintenanceContractController extends AbstractController
@@ -24,6 +25,7 @@ final class MaintenanceContractController extends AbstractController
     }
 
     #[Route(name: 'post', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function post(Request $request): JsonResponse
     {
         try {
@@ -61,6 +63,8 @@ final class MaintenanceContractController extends AbstractController
     }
 
     #[Route(name: 'put', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
+
     public function put(Request $request): JsonResponse
     {
         try {
@@ -103,6 +107,7 @@ final class MaintenanceContractController extends AbstractController
     }
 
     #[route(path: '/{uuid}',name: 'delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete($uuid): JsonResponse
     {
         try {
@@ -128,6 +133,7 @@ final class MaintenanceContractController extends AbstractController
 
 
     #[route(name: 'get', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function get(Request $request): JsonResponse {
         try {
             $one = $request->query->get('one', false);
@@ -138,7 +144,8 @@ final class MaintenanceContractController extends AbstractController
             }
 
             if (!empty($one)) {
-                $maintenanceContract = $this->maintenanceContractRepository->findOneBy(['uuid'=>$one]);
+                $website = $this->websiteRepository->findOneBy(['uuid'=>$one]);
+                $maintenanceContract = $website->getMaintenanceContract();
 
                 if (empty($maintenanceContract)) {
                     Throw new \Exception(MaintenanceContractService::MAINTENANCE_CONTRACT_NOT_FOUND,Response::HTTP_NOT_FOUND);

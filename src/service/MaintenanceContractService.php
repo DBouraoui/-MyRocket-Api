@@ -48,14 +48,14 @@ class MaintenanceContractService
     public function normalizeMaintenanceContract(MaintenanceContract $maintenanceContract): array {
         return [
             'uuid'=>$maintenanceContract->getUuid(),
-            'startAt'=>$maintenanceContract->getStartAt(),
-            'endAt'=>$maintenanceContract->getEndAt(),
-            'firstPaymentAt'=>$maintenanceContract->getFirstPaymentAt(),
-            'nextPaymentAt'=>$maintenanceContract->getNextPaymentAt(),
-            'lastPaymentAt'=>$maintenanceContract->getLastPaymentAt(),
+            'startAt'=>$maintenanceContract->getStartAt()->format('Y-m-d'),
+            'endAt'=>$maintenanceContract->getEndAt()->format('Y-m-d'),
+            'firstPaymentAt'=>$maintenanceContract->getFirstPaymentAt()->format('Y-m-d'),
+            'nextPaymentAt'=>$maintenanceContract->getNextPaymentAt()->format('Y-m-d'),
+            'lastPaymentAt'=>$maintenanceContract->getLastPaymentAt()->format('Y-m-d'),
             'monthlyCost'=>$maintenanceContract->getMonthlyCost(),
             'reccurence'=>$maintenanceContract->getReccurence(),
-            'createdAt'=>$maintenanceContract->getCreatedAt(),
+            'createdAt'=>$maintenanceContract->getCreatedAt()->format('Y-m-d'),
         ];
     }
 

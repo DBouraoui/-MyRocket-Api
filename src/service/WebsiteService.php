@@ -4,9 +4,11 @@ namespace App\service;
 
 use App\Entity\User;
 use App\Entity\Website;
+use App\Entity\WebsiteContract;
 use App\Entity\WebsiteMutualised;
 use App\Entity\WebsiteVps;
 use App\traits\ExeptionTrait;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -86,6 +88,34 @@ class WebsiteService
         }
     }
 
+    public function createWebsiteContract(array $data,User $user, Website $website): WebsiteContract
+    {
+        try {
+            $websiteContract = new WebsiteContract();
+
+            $firstPaymentAt = \DateTimeImmutable::createFromFormat('Y-m-d', $data['firstPaymentAt']) ?: new \DateTimeImmutable($data['firstPaymentAt']);
+            $lastPaymentAt = \DateTimeImmutable::createFromFormat('Y-m-d', $data['lastPaymentAt']) ?: new \DateTimeImmutable($data['lastPaymentAt']);
+            $nextPaymentAt = \DateTimeImmutable::createFromFormat('Y-m-d', $data['nextPaymentAt']) ?: new \DateTimeImmutable($data['nextPaymentAt']);
+
+            $websiteContract->setWebsite($website);
+            $websiteContract->setUser($user);
+            $websiteContract->setFirstPaymentAt($firstPaymentAt);
+            $websiteContract->setLastPaymentAt($lastPaymentAt);
+            $websiteContract->setNextPaymentAt($nextPaymentAt);
+            $websiteContract->setPrestation($data['prestation']);
+            $websiteContract->setAnnualCost($data['annualCost']);
+            $websiteContract->setTva($data['tva']);
+            $websiteContract->setReccurence($data['reccurence']);
+
+            $this->entityManager->persist($websiteContract);
+            $this->entityManager->flush();
+
+            return $websiteContract;
+        } catch (\Exception $e) {
+            Throw new \Exception($e->getMessage(),Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
     public function validate(Website $website): void {
         $errors = $this->validator->validate($website);
 
@@ -123,6 +153,29 @@ class WebsiteService
         $websitesArray = [];
         foreach ($websites as $website) {
             $websitesArray[] = $this->normalizeWebsite($website);
+        }
+        return $websitesArray;
+    }
+
+    public function normalizeWebsiteContract(WebsiteContract $websiteContract): array {
+        return [
+            "uuid" => $websiteContract->getUuid(),
+            "annualCost" => $websiteContract->getAnnualCost(),
+            "tva" => $websiteContract->getTva(),
+            "reccurence" => $websiteContract->getReccurence(),
+            "createdAt" => $websiteContract->getCreatedAt()?->format('m-d-Y'),
+            "updatedAt" => $websiteContract->getUpdatedAt()?->format('m-d-Y'),
+            "prestation" => $websiteContract->getPrestation(),
+            "firstPaymentAt" => $websiteContract->getFirstPaymentAt()?->format('m-d-Y'),
+            "lastPaymentAt" => $websiteContract->getLastPaymentAt()?->format('m-d-Y'),
+            "nextPaymentAt" => $websiteContract->getNextPaymentAt()?->format('m-d-Y'),
+        ];
+    }
+
+    public function normalizeWebsitesContracts(array $websitesContracts): array {
+        $websitesArray = [];
+        foreach ($websitesContracts as $websiteContract) {
+            $websitesArray[] = $this->normalizeWebsiteContract($websiteContract);
         }
         return $websitesArray;
     }

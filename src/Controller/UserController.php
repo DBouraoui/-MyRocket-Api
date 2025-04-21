@@ -7,8 +7,8 @@ use App\DTO\user\UserDeleteDTO;
 use App\DTO\user\UserPutDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
-use IntlDateFormatter;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,6 +29,7 @@ final class UserController extends AbstractController
         private readonly LoggerInterface $logger,
         private readonly ValidatorInterface $validator,
         private readonly UserRepository $userRepository,
+        private readonly UserService  $userService,
     ) {
 
     }
@@ -41,7 +42,7 @@ final class UserController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                throw new \Exception('Les données reçus sont vide');
+                throw new \Exception(UserService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
             }
 
             $registerDTO = RegisterDTO::fromArray($data);
@@ -57,25 +58,12 @@ final class UserController extends AbstractController
             }
 
             if (!empty($this->userRepository->findOneBy(['email'=>$data['email']]))) {
-                throw new \Exception('User already exists');
+                throw new \Exception(UserService::USER_ALREADY_EXIST, Response::HTTP_NOT_FOUND);
             }
 
-            $user = new User();
-            $data['firstname'] ? $user->setFirstname($data['firstname']) : null;
-            $data['lastname'] ? $user->setLastname($data['lastname']) : null;
-            $data['companyName'] ? $user->setCompanyName($data['companyName']) : null;
-            $user->setEmail($data['email']);
-            $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
-            $user->setPostCode($data['postCode']);
-            $user->setCity($data['city']);
-            $user->setCountry($data['country']);
-            $user->setAddress($data['address']);
-            $user->setPhone($data['phone']);
+            $this->userService->createUser($registerDTO);
 
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-
-            return $this->json(['success'=>true], Response::HTTP_CREATED);
+            return $this->json(UserService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
 
         } catch ( \Exception $e ) {
             $this->logger->error("Error creating user", ['error' => $e->getMessage()]);
@@ -96,14 +84,11 @@ final class UserController extends AbstractController
                 $userFinding = $this->userRepository->getOneUserByCriteria($criteria);
 
                 if (empty($userFinding)) {
-                    return $this->json(
-                        ['success' => false, 'message' => 'Utilisateur non trouvé'],
-                        Response::HTTP_NOT_FOUND
-                    );
+                   Throw new \Exception(UserService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
                 }
 
                 return $this->json(
-                    ['success' => true, 'data' => $this->normalizeUserObject($userFinding)],
+                    ['success' => true, 'data' => $this->userService->normalizeUserObject($userFinding)],
                     Response::HTTP_OK
                 );
             }
@@ -111,7 +96,7 @@ final class UserController extends AbstractController
             if (!empty($all) && empty($criteria)) {
                 $userFinding = $this->userRepository->findAll();
                 return $this->json(
-                    $this->normalizeUsersObjects($userFinding),
+                    $this->userService->normalizeUsersObjects($userFinding),
                     Response::HTTP_OK
                 );
             }
@@ -254,7 +239,7 @@ final class UserController extends AbstractController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function me(#[CurrentUser]User $user): JsonResponse {
         try {
-            return $this->json($this->normalizeUserObject($user), Response::HTTP_OK);
+            return $this->json($this->userService->normalizeUserObject($user), Response::HTTP_OK);
         }catch (\Exception $e) {
             $this->logger->error("Erreur serveur interne", ['error' => $e->getMessage()]);
             return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -289,44 +274,5 @@ final class UserController extends AbstractController
             $this->logger->error("Erreur serveur interne", ['error' => $e->getMessage()]);
             return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private function normalizeUserObject(User $user): array
-    {
-        $formatter = new \IntlDateFormatter(
-            'fr_FR',
-            IntlDateFormatter::FULL,
-            IntlDateFormatter::NONE,
-            null,
-            null,
-            'EEEE d MMMM YYYY'
-        );
-
-        return [
-            'uuid' => $user->getUuid(),
-            'firstname' => $user->getFirstname(),
-            'lastname' => $user->getLastname(),
-            'companyName' => $user->getCompanyName(),
-            'email' => $user->getEmail(),
-            'postCode' => $user->getPostCode(),
-            'city' => $user->getCity(),
-            'country' => $user->getCountry(),
-            'address' => $user->getAddress(),
-            'phone' => $user->getPhone(),
-            'createdAt' => $formatter->format($user->getCreatedAt()),
-            'updatedAt' => $formatter->format($user->getUpdatedAt()),
-            'role'=> $user->getRoles()[0]
-        ];
-    }
-
-    private function normalizeUsersObjects(array $users): array
-    {
-        $usersObject = [];
-
-        foreach ($users as $user) {
-            $usersObject[] = $this->normalizeUserObject($user);
-        }
-
-        return $usersObject;
     }
 }
