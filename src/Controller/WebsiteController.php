@@ -17,18 +17,22 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 #[Route('/api/website', name: 'app_website_')]
 final class WebsiteController extends AbstractController
 {
     public const POST_REQUIRED_FIELDS =['title', 'url', 'description', 'status', 'type', 'uuidUser'];
+    public const GET_ALL_WEBSITES = 'getAllWebsites';
+    public const GET_ONE_WEBSITE = 'getOneWebsite';
 
     public function __construct(
         private readonly LoggerInterface        $logger,
         private readonly EntityManagerInterface $entityManager,
         private readonly WebsiteRepository      $websiteRepository,
         private readonly UserRepository         $userRepository,
-        private readonly WebsiteService         $websiteService, private readonly EmailService $emailService,
+        private readonly WebsiteService         $websiteService, private readonly EmailService $emailService, private readonly CacheInterface $cache,
     ) {
     }
 
@@ -54,7 +58,10 @@ final class WebsiteController extends AbstractController
                 Throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
-            $website = $this->websiteService->createWebsite($data, $user);
+            $this->websiteService->createWebsite($data, $user);
+
+            $this->cache->delete(self::GET_ALL_WEBSITES.$user->getUuid());
+            $this->cache->delete(self::GET_ONE_WEBSITE.$user->getUuid());
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
         } catch(\Exception $e) {
@@ -74,12 +81,22 @@ final class WebsiteController extends AbstractController
             $uuid = $request->query->get('uuid', null);
 
             if ($all) {
-                $websites = $user->getWebsites()->toArray();
-                $websiteArray = $this->websiteService->normalizeWebsites($websites);
+
+                $websiteArray = $this->cache->get(self::GET_ALL_WEBSITES.$user->getUuid(), function (ItemInterface $item) use($user){
+                    $item->expiresAfter(7200);
+                    $websites =  $user->getWebsites()->toArray();
+                   return $this->websiteService->normalizeWebsites($websites);
+                });
 
                 return $this->json($websiteArray, Response::HTTP_OK);
+
             } elseif ($uuid) {
-                $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
+
+                $website = $this->cache->get(self::GET_ONE_WEBSITE.$uuid, function (ItemInterface $item) use($user, $uuid){
+                    $item->expiresAfter(7200);
+                    return $this->websiteRepository->findOneBy(['uuid' => $uuid]);
+                });
+
 
                 if (!$website) {
                     Throw new Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
@@ -134,6 +151,9 @@ final class WebsiteController extends AbstractController
 
             $this->entityManager->flush();
 
+            $this->cache->delete(self::GET_ALL_WEBSITES.$website->getUser()->getUuid());
+            $this->cache->delete(self::GET_ONE_WEBSITE.$website->getUser()->getUuid());
+
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {
             $this->logger->error('Error updating website: ' . $e->getMessage());
@@ -160,6 +180,9 @@ final class WebsiteController extends AbstractController
 
             $this->entityManager->remove($website);
             $this->entityManager->flush();
+
+            $this->cache->delete(self::GET_ALL_WEBSITES.$website->getUser()->getUuid());
+            $this->cache->delete(self::GET_ONE_WEBSITE.$website->getUser()->getUuid());
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {

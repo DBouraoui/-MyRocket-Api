@@ -16,16 +16,20 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 #[Route('/api/contact', name: 'app_contact')]
 final class ContactController extends AbstractController
 {
+    public const GET_ALLCONTACTS = 'getAllContacts';
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface        $logger,
         private readonly FilesystemOperator     $contactStorage,
         private readonly  ContactRepository     $contactRepository,
-        private readonly ValidatorInterface $validator,
+        private readonly ValidatorInterface     $validator, private readonly CacheInterface $cache,
     )
     {}
 
@@ -88,6 +92,8 @@ final class ContactController extends AbstractController
 
             $this->entityManager->persist($contact);
             $this->entityManager->flush();
+
+            $this->cache->delete(self::GET_ALLCONTACTS);
 
             return $this->json(
                 ['success' => true, 'contactId' => $contact->getId()],
@@ -168,10 +174,14 @@ final class ContactController extends AbstractController
         try {
             $oneContactByUuid = $request->query->get('uuid');
             $all = $request->query->get('all');
-            $withImageUrls = $request->query->getBoolean('withImageUrls', true); // Paramètre optionnel pour les URLs d'images
+            $withImageUrls = $request->query->getBoolean('withImageUrls', true);
 
             if (!empty($oneContactByUuid) && empty($all)) {
-                $contact = $this->contactRepository->findOneBy(['uuid' => $oneContactByUuid]);
+
+                $contact = $this->cache->get(self::GET_ALLCONTACTS,function (ItemInterface $item) use($oneContactByUuid) {
+                    $item->expiresAfter(3600);
+                    return $this->contactRepository->findOneBy(['uuid' => $oneContactByUuid]);
+                });
 
                 if (empty($contact)) {
                     return $this->json(
