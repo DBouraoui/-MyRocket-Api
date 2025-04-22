@@ -26,9 +26,9 @@ class UserService
         try {
 
             $user = new User();
-            $data->firstname ? $user->setFirstname($data->firstname) : null;
-            $data->lastname ? $user->setLastname($data->lastname) : null;
-            $data->companyName ? $user->setCompanyName($data->companyName) : null;
+           !empty($data->firstname) ? $user->setFirstname($data->firstname) : null;
+            !empty($data->lastname) ? $user->setLastname($data->lastname) : null;
+            !empty($data->companyName) ? $user->setCompanyName($data->companyName) : null;
             $user->setEmail($data->email);
             $user->setPassword($this->passwordHasher->hashPassword($user, $data->password));
             $user->setPostCode($data->postCode);
