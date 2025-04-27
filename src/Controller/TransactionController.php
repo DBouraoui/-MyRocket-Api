@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
@@ -12,13 +13,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
 #[Route('api/transaction', name: 'app_transaction')]
 final class TransactionController extends AbstractController
 {
-    public const POST_REQUIRED_FIELDS = ['uuidUser','uuidWebsiteContract'];
     public const GET_USER_TRANSACTIONS = 'getUserTransactions';
     public const GET_ALL_USER_TRANSACTIONS = 'getAllUserTransactions';
     public function __construct(private readonly LoggerInterface $logger, private readonly UserRepository $userRepository, private readonly WebsiteContractRepository $websiteContractRepository, private readonly TransactionService $transactionService, private readonly TransactionRepository $transactionRepository, private readonly CacheInterface $cache)
@@ -47,6 +49,7 @@ final class TransactionController extends AbstractController
                 Throw new \Exception(TransactionService::WEBSITE_CONTRACT_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
+
             $this->transactionService->createTransaction($user, $websiteContract);
             $this->cache->delete(self::GET_ALL_USER_TRANSACTIONS);
             $this->cache->delete(self::GET_USER_TRANSACTIONS.$user->getUuid());
@@ -55,6 +58,41 @@ final class TransactionController extends AbstractController
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             return new JsonResponse($e->getMessage(),Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route(path:'/user', name: '_getUserAndtransaction', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function getUserAndContract() {
+        try {
+            $users = $this->userRepository->findAll();
+
+            $informations = [];
+            foreach ($users as $user) {
+                $array = [
+                    'uuid' => $user->getUuid(),
+                    'email' => $user->getEmail(),
+                ];
+
+                if($user->getWebsiteContract()) {
+                    $websiteContracts = [];
+                    foreach ($user->getWebsiteContract() as $websiteContract) {
+                        $websiteContracts[] = [
+                            'uuid' => $websiteContract->getUuid(),
+                            'name' => $websiteContract->getPrestation(),
+                        ];
+                    }
+                    $array['websiteContracts'] = $websiteContracts;
+                }
+
+                $informations[] = $array;
+            }
+
+            return new JsonResponse($informations, Response::HTTP_OK);
+
+        } catch(\Exception $e) {
+            $this->logger->error($e->getMessage());
+            return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -102,4 +140,17 @@ final class TransactionController extends AbstractController
             return new JsonResponse($exception->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+        #[route(path:'/me', name: '_getme', methods: ['GET'])]
+        public function getByUuid(#[CurrentUser]User $user): JsonResponse
+        {
+            try {
+                $transactions = $user->getTransactions()->toArray();
+
+                return new JsonResponse($this->transactionService->normaliseTransactions($transactions), Response::HTTP_OK);
+            } catch(\Exception $e) {
+                $this->logger->error($e->getMessage());
+                return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
 }

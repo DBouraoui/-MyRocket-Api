@@ -113,6 +113,20 @@ final class WebsiteController extends AbstractController
         }
     }
 
+    #[route(path: '/all', name: '_all', methods:['GET'] )]
+    #[IsGranted('IS_AUTHENTICATED')]
+
+    public function getAllWebsite() {
+        try {
+           $websites =  $this->websiteRepository->findAll();
+
+            return $this->json($this->websiteService->normalizeWebsites($websites), Response::HTTP_OK);
+        } catch(\Exception $e) {
+            $this->logger->error('Error fetching websites: ' . $e->getMessage());
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
      * Met à jour un site web existant
      */

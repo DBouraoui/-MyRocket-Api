@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\MaintenanceContractRepository;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
@@ -13,12 +14,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/maintenance/contract', name: 'app_maintenance_contract')]
 final class MaintenanceContractController extends AbstractController
 {
-    public const POST_REQUIRED_FIELDS = ['monthlyCost', 'uuidWebsite', 'uuidUser','firstPaymentAt','reccurence', 'startAt', 'endAt'];
+    public const POST_REQUIRED_FIELDS = ['monthlyCost', 'uuidWebsite', 'firstPaymentAt','reccurence', 'startAt', 'endAt'];
     public const PUT_ALLOW_FIELDS = ['monthlyCost', 'reccurence', 'endAt'];
     public function __construct(private readonly LoggerInterface $logger, private readonly UserRepository $userRepository, private readonly WebsiteRepository $websiteRepository, private readonly MaintenanceContractService $maintenanceContractService, private readonly MaintenanceContractRepository $maintenanceContractRepository, private readonly EntityManagerInterface $entityManager)
     {
@@ -37,17 +39,14 @@ final class MaintenanceContractController extends AbstractController
 
             $this->checkRequiredFields(self::POST_REQUIRED_FIELDS, $data);
 
-            $userWebsite = $this->userRepository->findOneBy(['uuid'=>$data['uuidUser']]);
-
-            if (empty($userWebsite)) {
-                Throw new \Exception(MaintenanceContractService::USER_NOT_FOUND,Response::HTTP_NOT_FOUND);
-            }
 
             $website = $this->websiteRepository->findOneBy(['uuid'=>$data['uuidWebsite']]);
 
             if (empty($website)) {
                 Throw new \Exception(MaintenanceContractService::WEBSITE_NOT_FOUND,Response::HTTP_NOT_FOUND);
             }
+
+            $userWebsite = $website->getUser();
 
             if ($website->getMaintenanceContract()) {
                 Throw new \Exception(MaintenanceContractService::MAINTENANCE_CONTRACT_ALREADY_EXISTS,Response::HTTP_UNAUTHORIZED);
@@ -167,6 +166,19 @@ final class MaintenanceContractController extends AbstractController
             }
 
             return new JsonResponse(MaintenanceContractService::ERROR_RESPONSE,Response::HTTP_NOT_FOUND);
+        } catch(\Exception $exception) {
+            $this->logger->error($exception->getMessage());
+            return new JsonResponse(['error' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    #[route(path:'/me',name: '_getme', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED')]
+    public function getme(#[CurrentUser]User $user): JsonResponse {
+        try {
+            $maintenanceContract = $user->getMaintenanceContracts()->toArray();
+
+            return new JsonResponse($this->maintenanceContractService->normalizeMaintenancesContracts($maintenanceContract),Response::HTTP_OK);
         } catch(\Exception $exception) {
             $this->logger->error($exception->getMessage());
             return new JsonResponse(['error' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);

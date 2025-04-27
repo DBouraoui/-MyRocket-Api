@@ -39,7 +39,7 @@ class TransactionService
             'uuid' => $transaction->getUuid(),
             'amount' => $transaction->getAmount(),
             'tva' => $transaction->getTva(),
-            'createdAt' => $transaction->getCreatedAt(),
+            'createdAt' => $transaction->getCreatedAt()->format('d-m-Y H:i:s'),
             'user' => $transaction->getUser()->getEmail(),
             'userUuid' => $transaction->getUser()->getUuid(),
             'websiteContract'=> $transaction->getWebsiteContract()->getPrestation(),
