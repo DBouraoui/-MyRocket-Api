@@ -4,6 +4,7 @@ namespace App\Controller\Administrateur;
 
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
+use App\service\EmailService;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -30,7 +31,7 @@ class AdministrateurWebsite extends AbstractController
     (
         private WebsiteService $websiteService,
         private UserRepository $userRepository,
-        private CacheInterface $cache, private readonly LoggerInterface $logger, private readonly WebsiteRepository $websiteRepository, private readonly EntityManagerInterface $entityManager
+        private CacheInterface $cache, private readonly LoggerInterface $logger, private readonly WebsiteRepository $websiteRepository, private readonly EntityManagerInterface $entityManager, private readonly EmailService $emailService
     ) {
 
     }
@@ -64,10 +65,15 @@ class AdministrateurWebsite extends AbstractController
                 Throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
-            $this->websiteService->createWebsite($data, $user);
+          $website =  $this->websiteService->createWebsite($data, $user);
 
             $this->cache->delete(self::GET_ALL_WEBSITES.$user->getUuid());
             $this->cache->delete(self::GET_ONE_WEBSITE.$user->getUuid());
+
+            $this->emailService->generate($user, "Du nouveau sur votre espace MyRocket !",[
+                "template"=> "websiteCreate",
+                "user"=>$user
+            ]);
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
         } catch(\Exception $e) {

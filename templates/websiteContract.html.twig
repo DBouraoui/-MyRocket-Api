@@ -1,0 +1,45 @@
+<p>Un petit récapitulatif des informations de votre contrat :</p>
+
+<div class="contract-details">
+    <div class="detail-row">
+        <div class="detail-label">Prestation :</div>
+        <div class="detail-value">{{ websiteContract.prestation}} </div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Récurrence :</div>
+        <div class="detail-value">{{ websiteContract.reccurence }}</div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Date de création :</div>
+        <div class="detail-value">{{ websiteContract.createdAt|date('d/m/Y') }}</div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Date du premier paiement :</div>
+        <div class="detail-value">{{ websiteContract.firstPaymentAt|date('d/m/Y') }}</div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Date du prochain paiement :</div>
+        <div class="detail-value">{{ websiteContract.nextPaymentAt|date('d/m/Y') }}</div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">TVA applicable :</div>
+        <div class="detail-value">{{ websiteContract.tva }}%</div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Coût annuel :</div>
+        <div class="detail-value">{{ websiteContract.annualCost|number_format(2, ',', ' ') }} €</div>
+    </div>
+</div>
+
+<p class="important">Si vous avez des questions concernant ce contrat, n'hésitez pas à nous contacter.</p>
+
+<div class="footer">
+    <p>Cordialement,<br>
+        L'équipe de MyRocket</p>
+</div>

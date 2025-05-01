@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Création de votre site web</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        .important {
+            font-weight: bold;
+        }
+        .list-item {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Bonjour {% if user.firstname %}{{ user.firstname }} {{ user.lastname }}{% else %}{{ user.companyName }}{% endif %}</h1>
+
+<p>Votre site web est en cours de création !</p>
+
+<p>Pour rappel, vous pouvez suivre l'avancement de votre site web sur votre espace personnel dans la rubrique "Site web".</p>
+
+<p>Vous y retrouverez :</p>
+<div class="list-item">• L'URL de votre site</div>
+<div class="list-item">• Son avancement</div>
+<div class="list-item">• Sa date de création</div>
+<div class="list-item">• Un titre et une description de votre projet</div>
+
+<p>Une fois le site terminé, vous aurez accès à d'autres informations complémentaires :</p>
+<div class="list-item">• Contrat du site web</div>
+<div class="list-item">• Contrat de maintenance (si vous avez souscrit à cette option)</div>
+<div class="list-item">• Informations de votre hébergement (identifiants de connexion) qui vous seront transmises par email à votre demande via notre site web en un clic</div>
+
+<p class="important">Nous restons à votre disposition pour toute question.</p>
+
+<p>Cordialement,<br>
+    L'équipe de MyRocket</p>
+</body>
+</html>

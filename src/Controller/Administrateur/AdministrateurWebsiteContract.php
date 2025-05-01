@@ -4,6 +4,7 @@ namespace App\Controller\Administrateur;
 
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
+use App\service\EmailService;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -24,7 +25,7 @@ class AdministrateurWebsiteContract extends AbstractController
     (
         private WebsiteService             $websiteService,
         private readonly WebsiteRepository $websiteRepository,
-        private readonly LoggerInterface   $logger, private readonly EntityManagerInterface $entityManager, private readonly UserRepository $userRepository
+        private readonly LoggerInterface   $logger, private readonly EntityManagerInterface $entityManager, private readonly UserRepository $userRepository, private readonly EmailService $emailService
     )
     {
 
@@ -69,7 +70,12 @@ class AdministrateurWebsiteContract extends AbstractController
                 Throw new \Exception(WebsiteService::WEBSITE_CONTRACT_ALREADY_EXIST, Response::HTTP_BAD_REQUEST);
             }
 
-            $this->websiteService->createWebsiteContract($data, $user,$website);
+           $websiteContract = $this->websiteService->createWebsiteContract($data, $user,$website);
+
+            $this->emailService->generate($user, "Un contrat vien d'être établie !",[
+                "template"=>"websiteContract",
+                "websiteContract"=>$websiteContract
+            ]);
 
             return new JsonResponse(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {
