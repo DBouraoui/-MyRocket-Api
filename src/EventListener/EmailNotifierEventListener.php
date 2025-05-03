@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Event\TransactionCreateEvent;
 use App\Event\UserRegistredEvent;
 use App\Event\WebsiteContractEvent;
 use App\Event\WebsiteCreateEvent;
@@ -30,9 +31,39 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
             WebsiteCreateEvent::NAME => 'onWebsiteCreate',
             WebsiteCredentialsEvent::NAME => 'onWebsiteCredentials',
             WebsiteContractEvent::NAME => 'onWebsiteContract',
+            TransactionCreateEvent::NAME => 'onTransactionCreate',
         ];
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function onTransactionCreate(TransactionCreateEvent $event): void
+    {
+        try {
+            $user = $event->getUser();
+            $transaction = $event->getTransaction();
+
+            $context = [
+                'user'=>$user,
+                'transaction'=>$transaction,
+                'template'=>TransactionCreateEvent::TEMPLATE_NAME
+            ];
+
+            $this->emailService->generate(
+                $user, "Une facture est arriver sur votre espace",
+                $context
+            );
+            $this->logger->info("Facture envoyer à ". $user->getEmail());
+        } catch(\Exception $e) {
+            $this->logger->error($e->getMessage());
+            Throw new \Exception($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
     public function onUserRegistered(userRegistredEvent $event) :void
     {
         try {
@@ -54,6 +85,9 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     public function onWebsiteContract(WebsiteContractEvent $event) :void
     {
         try {

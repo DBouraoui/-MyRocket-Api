@@ -2,10 +2,12 @@
 
 namespace App\Controller\Administrateur;
 
+use App\Event\TransactionCreateEvent;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
 use App\service\TransactionService;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,7 +25,16 @@ class AdministrateurTransaction extends AbstractController
     public const GET_USER_TRANSACTIONS = 'getUserTransactions';
     public const GET_ALL_USER_TRANSACTIONS = 'getAllUserTransactions';
 
-    public function __construct(private readonly UserRepository $userRepository, private readonly WebsiteContractRepository $websiteContractRepository, private readonly TransactionService $transactionService, private readonly CacheInterface $cache, private readonly LoggerInterface $logger, private readonly TransactionRepository $transactionRepository)
+    public function __construct
+    (
+        private readonly UserRepository $userRepository,
+        private readonly WebsiteContractRepository $websiteContractRepository,
+        private readonly TransactionService $transactionService,
+        private readonly CacheInterface $cache,
+        private readonly LoggerInterface $logger,
+        private readonly TransactionRepository $transactionRepository,
+        private readonly EventDispatcherInterface $dispatcher
+    )
     {
     }
 
@@ -50,9 +61,12 @@ class AdministrateurTransaction extends AbstractController
             }
 
 
-            $this->transactionService->createTransaction($user, $websiteContract);
+           $transaction =  $this->transactionService->createTransaction($user, $websiteContract);
             $this->cache->delete(self::GET_ALL_USER_TRANSACTIONS);
             $this->cache->delete(self::GET_USER_TRANSACTIONS . $user->getUuid());
+
+            $event = new TransactionCreateEvent($user, $transaction);
+            $this->dispatcher->dispatch($event, TransactionCreateEvent::NAME);
 
             return new JsonResponse(TransactionService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch (\Exception $e) {
