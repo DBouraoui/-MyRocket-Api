@@ -62,8 +62,7 @@ class AdministrateurTransaction extends AbstractController
     }
 
     #[Route(path: '/user', name: '_getUserAndtransaction', methods: ['GET'])]
-    public function getUserAndContract()
-    {
+    public function getUserAndContract() {
         try {
             $users = $this->userRepository->findAll();
 
@@ -74,7 +73,8 @@ class AdministrateurTransaction extends AbstractController
                     'email' => $user->getEmail(),
                 ];
 
-                if ($user->getWebsiteContract()) {
+                // Utiliser le nom exact de la méthode getter correspondant à votre propriété
+                if (!$user->getWebsiteContract()->isEmpty()) {
                     $websiteContracts = [];
                     foreach ($user->getWebsiteContract() as $websiteContract) {
                         $websiteContracts[] = [
@@ -92,7 +92,7 @@ class AdministrateurTransaction extends AbstractController
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
