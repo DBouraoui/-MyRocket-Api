@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Event\WebsiteCredentialsEvent;
 use App\Repository\WebsiteRepository;
 use App\service\EmailService;
 use App\service\WebsiteService;
 use Psr\Cache\InvalidArgumentException;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,7 +28,9 @@ final class WebsiteController extends AbstractController
     public function __construct(
         private readonly LoggerInterface        $logger,
         private readonly WebsiteRepository      $websiteRepository,
-        private readonly WebsiteService         $websiteService, private readonly EmailService $emailService, private readonly CacheInterface $cache,
+        private readonly WebsiteService         $websiteService,
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly CacheInterface $cache,
     ) {
     }
 
@@ -80,8 +84,9 @@ final class WebsiteController extends AbstractController
                 Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
-            if ($website->getWebsiteVps()) {
+            $configuration = [];
 
+            if ($website->getWebsiteVps()) {
                 $configuration = [
                     'address'=> $website->getWebsiteVps()->getAddress(),
                     'port'=> $website->getWebsiteVps()->getPort(),
@@ -99,11 +104,12 @@ final class WebsiteController extends AbstractController
                 ];
             }
 
-            $this->emailService->generate($user, 'Identifiant personelle',[
-                'template'=> 'credentials',
-                'urlWebsite'=>$website->getUrl(),
-                'configuration'=> $configuration
-            ]);
+            if (empty($website->getWebsiteMutualised()) && empty($website->getWebsiteVps())) {
+                Throw new \Exception(WebsiteService::CONFIGURATION_NOT_FOUND, Response::HTTP_NOT_FOUND);
+            }
+
+            $event = new WebsiteCredentialsEvent($user,$website,$configuration);
+            $this->dispatcher->dispatch($event, WebsiteCredentialsEvent::NAME);
 
             return new JsonResponse(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {

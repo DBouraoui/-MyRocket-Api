@@ -17,7 +17,10 @@ class EmailService
     public function __construct(private readonly LoggerInterface $logger,private readonly MailerInterface $mailer)
     {}
 
-    public function generate(User $user, string $subject,array $context) {
+    /**
+     * @throws \Exception
+     */
+    public function generate(User $user, string $subject, array $context) {
         try {
             $email = (new TemplatedEmail())
                 ->from(new Address($_ENV['MAIL_ADDRESS']))

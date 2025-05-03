@@ -2,11 +2,13 @@
 
 namespace App\Controller\Administrateur;
 
+use App\Event\WebsiteContractEvent;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
 use App\service\EmailService;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,7 +27,10 @@ class AdministrateurWebsiteContract extends AbstractController
     (
         private WebsiteService             $websiteService,
         private readonly WebsiteRepository $websiteRepository,
-        private readonly LoggerInterface   $logger, private readonly EntityManagerInterface $entityManager, private readonly UserRepository $userRepository, private readonly EmailService $emailService
+        private readonly LoggerInterface   $logger,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly EmailService $emailService
     )
     {
 
@@ -72,10 +77,8 @@ class AdministrateurWebsiteContract extends AbstractController
 
            $websiteContract = $this->websiteService->createWebsiteContract($data, $user,$website);
 
-            $this->emailService->generate($user, "Un contrat vien d'être établie !",[
-                "template"=>"websiteContract",
-                "websiteContract"=>$websiteContract
-            ]);
+            $event = new WebsiteContractEvent($user,$websiteContract);
+            $this->dispatcher->dispatch($event, WebsiteContractEvent::NAME);
 
             return new JsonResponse(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
         } catch(\Exception $e) {

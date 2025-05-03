@@ -2,12 +2,14 @@
 
 namespace App\Controller\Administrateur;
 
+use App\Event\WebsiteCreateEvent;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
 use App\service\EmailService;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +33,11 @@ class AdministrateurWebsite extends AbstractController
     (
         private WebsiteService $websiteService,
         private UserRepository $userRepository,
-        private CacheInterface $cache, private readonly LoggerInterface $logger, private readonly WebsiteRepository $websiteRepository, private readonly EntityManagerInterface $entityManager, private readonly EmailService $emailService
+        private CacheInterface $cache,
+        private readonly LoggerInterface $logger,
+        private readonly WebsiteRepository $websiteRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly  EventDispatcherInterface  $event
     ) {
 
     }
@@ -65,15 +71,13 @@ class AdministrateurWebsite extends AbstractController
                 Throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
-          $website =  $this->websiteService->createWebsite($data, $user);
+           $this->websiteService->createWebsite($data, $user);
 
             $this->cache->delete(self::GET_ALL_WEBSITES.$user->getUuid());
             $this->cache->delete(self::GET_ONE_WEBSITE.$user->getUuid());
 
-            $this->emailService->generate($user, "Du nouveau sur votre espace MyRocket !",[
-                "template"=> "websiteCreate",
-                "user"=>$user
-            ]);
+            $event = new WebsiteCreateEvent($user);
+            $this->event->dispatch($event, WebsiteCreateEvent::NAME);
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
         } catch(\Exception $e) {
