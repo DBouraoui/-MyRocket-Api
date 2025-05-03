@@ -4,11 +4,13 @@ namespace App\Controller\Administrateur;
 
 use App\DTO\user\RegisterDTO;
 use App\DTO\user\UserDeleteDTO;
+use App\Event\UserRegistredEvent;
 use App\Repository\UserRepository;
 use App\service\EmailService;
 use App\service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +33,7 @@ class AdministrateurUser extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly UserService        $userService,
         private readonly UserRepository     $userRepository,
-        private readonly EmailService       $emailService,
+        private EventDispatcherInterface $eventDispatcher,
         private readonly CacheInterface     $cache,
         private readonly LoggerInterface    $logger, private readonly EntityManagerInterface $entityManager
     )
@@ -66,20 +68,17 @@ class AdministrateurUser extends AbstractController
 
             $user = $this->userService->createUser($registerDTO);
 
-            $context = [
-                'template'=>'register',
-                'emailUser'=>$user->getEmail(),
-                'passwordUser'=>$registerDTO->password,
-                'loginUrl'=> 'http://login.fr'
-            ];
-
-            $this->emailService->generate($user,'Rendez vous sur MyRocket !',$context);
+            $event = new UserRegistredEvent($user, $registerDTO->password);
+            $this->eventDispatcher->dispatch($event, UserRegistredEvent::NAME);
 
             $this->cache->delete(self::GET_ALL_USERS);
 
             return $this->json(UserService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
 
         } catch ( \Exception $e ) {
+            $this->logger->error("Error creating user", ['error' => $e->getMessage()]);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (InvalidArgumentException $e) {
             $this->logger->error("Error creating user", ['error' => $e->getMessage()]);
             return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -176,6 +175,8 @@ class AdministrateurUser extends AbstractController
 
             $this->entityManager->remove($customer);
             $this->entityManager->flush();
+
+            $this->cache->delete(self::GET_ALL_USERS);
 
             return $this->json(
                 ['success' => true, 'message' => 'Utilisateur supprimé avec succès'],

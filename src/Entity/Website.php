@@ -43,13 +43,13 @@ class Website
     #[ORM\ManyToOne(inversedBy: 'websites')]
     private ?User $user = null;
 
-    #[ORM\OneToOne(mappedBy: 'website', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'website', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private ?WebsiteMutualised $websiteMutualised = null;
 
     #[ORM\OneToOne(mappedBy: 'website', cascade: ['persist', 'remove'])]
     private ?WebsiteVps $websiteVps = null;
 
-    #[ORM\OneToOne(mappedBy: 'website', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'website', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private ?WebsiteContract $WebsiteContract = null;
 
     #[ORM\OneToOne(mappedBy: 'website', cascade: ['persist', 'remove'])]

@@ -50,7 +50,8 @@ final class WebsiteContractController extends AbstractController
                     'status' => $websiteContract->getStatus(),
                     'type' => $websiteContract->getType(),
                     'createdAt' => $websiteContract->getCreatedAt()->format("d-m-Y"),
-                    'updatedAt' => $websiteContract->getUpdatedAt()->format("d-m-Y")
+                    'updatedAt' => $websiteContract->getUpdatedAt()->format("d-m-Y"),
+                    'hasConfig'=> $websiteContract->getWebsiteVps() || $websiteContract->getWebsiteMutualised(),
                 ];
 
                 // Ajouter le contrat du site web s'il existe

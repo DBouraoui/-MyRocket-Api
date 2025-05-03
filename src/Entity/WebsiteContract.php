@@ -44,8 +44,8 @@ class WebsiteContract
     #[ORM\ManyToOne(inversedBy: 'WebsiteContract')]
     private ?User $user = null;
 
-    #[ORM\OneToOne(inversedBy: 'WebsiteContract', cascade: ['persist'])]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\OneToOne(inversedBy: 'websiteContract')]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private ?Website $website = null;
 
     #[ORM\Column]

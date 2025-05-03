@@ -72,7 +72,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Website>
      */
-    #[ORM\OneToMany(targetEntity: Website::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: Website::class, mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $websites;
 
     /**

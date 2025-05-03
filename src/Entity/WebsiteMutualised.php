@@ -37,8 +37,8 @@ class WebsiteMutualised
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToOne(inversedBy: 'websiteMutualised', cascade: ['persist'])]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\OneToOne(inversedBy: 'websiteMutualised')]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private ?Website $website = null;
 
     #[ORM\PrePersist]

@@ -1,54 +1,393 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Création de votre site web</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #0f52ba;
+            --secondary-color: #4a89dc;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --light-bg: #f8fafc;
+            --dark-bg: #1a365d;
+            --text-color: #334155;
+            --light-text: #f1f5f9;
+            --border-radius: 10px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'SF Pro Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-color);
             line-height: 1.6;
-            color: #333;
-            max-width: 600px;
+            padding: 25px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            position: relative;
         }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
+
+        .header {
+            background: linear-gradient(120deg, var(--dark-bg), var(--primary-color));
+            color: var(--light-text);
+            padding: 35px 30px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        p {
-            margin-bottom: 15px;
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.1;
         }
-        .important {
-            font-weight: bold;
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.6;
         }
-        .list-item {
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.05rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+
+        .website-icon {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
             margin-left: 20px;
-            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-text {
+            padding: 25px 30px 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            border-radius: 3px 0 0 3px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .card-title i {
+            color: var(--secondary-color);
+            font-size: 1.1em;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+            color: var(--text-color);
+            transition: var(--transition);
+            padding-left: 12px;
+        }
+
+        .list-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .list-item:hover {
+            transform: translateX(5px);
+        }
+
+        .list-item::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            margin-top: 0.65em;
+            flex-shrink: 0;
+        }
+
+        .important {
+            margin-top: 30px;
+            background-color: rgba(74, 137, 220, 0.08);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            font-size: 1.05rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 12px rgba(74, 137, 220, 0.08);
+            border: 1px solid rgba(74, 137, 220, 0.15);
+        }
+
+        .important::before {
+            content: "\f05a";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: var(--secondary-color);
+            font-size: 1.3rem;
+        }
+
+        .footer {
+            padding: 30px;
+            background: linear-gradient(to right, var(--light-bg), #f1f5f9);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+            color: #64748b;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .company-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .company-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .copyright {
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .contact-button {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            margin: 25px 0 5px;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(74, 137, 220, 0.2);
+        }
+
+        .contact-button:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 137, 220, 0.3);
+        }
+
+        .contact-button i {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .container {
+                margin: 0;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+                padding: 25px 20px;
+            }
+
+            .website-icon {
+                margin-left: 0;
+                align-self: center;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .content, .welcome-text {
+                padding: 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
-<h1>Bonjour {% if user.firstname %}{{ user.firstname }} {{ user.lastname }}{% else %}{{ user.companyName }}{% endif %}</h1>
+<div class="container">
+    <div class="header">
+        <div class="header-content">
+            <h1>Création de votre site web</h1>
+            <p>Votre projet de site web est désormais en cours de réalisation</p>
+        </div>
+        <div class="website-icon">
+            <i class="fas fa-globe"></i>
+        </div>
+    </div>
 
-<p>Votre site web est en cours de création !</p>
+    <div class="welcome-text">
+        Bonjour {% if user.firstname %}{{ user.firstname }} {{ user.lastname }}{% else %}{{ user.companyName }}{% endif %}
+    </div>
 
-<p>Pour rappel, vous pouvez suivre l'avancement de votre site web sur votre espace personnel dans la rubrique "Site web".</p>
+    <div class="content">
+        <p><strong>Votre site web est en cours de création !</strong></p>
 
-<p>Vous y retrouverez :</p>
-<div class="list-item">• L'URL de votre site</div>
-<div class="list-item">• Son avancement</div>
-<div class="list-item">• Sa date de création</div>
-<div class="list-item">• Un titre et une description de votre projet</div>
+        <p>Pour rappel, vous pouvez suivre l'avancement de votre site web sur votre espace personnel dans la rubrique "Site web".</p>
 
-<p>Une fois le site terminé, vous aurez accès à d'autres informations complémentaires :</p>
-<div class="list-item">• Contrat du site web</div>
-<div class="list-item">• Contrat de maintenance (si vous avez souscrit à cette option)</div>
-<div class="list-item">• Informations de votre hébergement (identifiants de connexion) qui vous seront transmises par email à votre demande via notre site web en un clic</div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-clipboard-list"></i> Informations actuellement disponibles
+            </div>
 
-<p class="important">Nous restons à votre disposition pour toute question.</p>
+            <div class="list-item">L'URL de votre site</div>
+            <div class="list-item">Son avancement</div>
+            <div class="list-item">Sa date de création</div>
+            <div class="list-item">Un titre et une description de votre projet</div>
+        </div>
 
-<p>Cordialement,<br>
-    L'équipe de MyRocket</p>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-check-circle"></i> Informations disponibles après finalisation
+            </div>
+
+            <div class="list-item">Contrat du site web</div>
+            <div class="list-item">Contrat de maintenance (si vous avez souscrit à cette option)</div>
+            <div class="list-item">Informations de votre hébergement (identifiants de connexion) qui vous seront transmises par email à votre demande via notre site web en un clic</div>
+        </div>
+
+        <p class="important">Nous restons à votre disposition pour toute question.</p>
+
+        <a href="#contact" class="contact-button">
+            <i class="fas fa-envelope"></i> Nous contacter
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>Cordialement,<br>L'équipe de MyRocket</p>
+
+        <div class="company-info">
+            <div class="company-logo">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <span>MyRocket</span>
+        </div>
+
+        <div class="copyright">
+            © 2025 MyRocket - Tous droits réservés
+        </div>
+    </div>
+</div>
 </body>
 </html>
