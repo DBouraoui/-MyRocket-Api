@@ -7,6 +7,7 @@ use App\Event\ResendInvoiceRapportAdminEvent;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -21,10 +22,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ResendEmailInvoiceUser extends Command
 {
     public function __construct(
-        private readonly LoggerInterface           $logger,
-        private readonly EventDispatcherInterface  $eventDispatcher,
-        private readonly UserRepository            $userRepository,
-        private readonly TransactionRepository $transactionRepository
+        private readonly LoggerInterface          $logger,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly UserRepository           $userRepository,
+        private readonly TransactionRepository    $transactionRepository, private readonly EntityManagerInterface $entityManager
     ) {
         parent::__construct();
     }
@@ -45,11 +46,12 @@ class ResendEmailInvoiceUser extends Command
 
             $transactions = $this->transactionRepository->createQueryBuilder('t')
                 ->where('t.createdAt <= :sevenDaysAgo')
-                ->andWhere('t.isPaid = :isPaid')  // Utilisez andWhere() au lieu d'un second where()
+                ->andWhere('t.isPaid = :isPaid')
                 ->setParameter('sevenDaysAgo', $sevenDaysAgo)
-                ->setParameter('isPaid', false)   // Utilisez false au lieu de 0, ou selon le type dans votre entité
+                ->setParameter('isPaid', false)
                 ->getQuery()
                 ->getResult();
+
             $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($transactions)));
 
             if (!empty($transactions)) {
@@ -58,6 +60,10 @@ class ResendEmailInvoiceUser extends Command
                 foreach ($transactions as $transaction) {
                     $user = $transaction->getUser();
                     $data[] = $transaction;
+
+                    $transaction->setIsReminderSent(true);
+                    $transaction->setReminderSentAt(new \DateTimeImmutable('now'));
+                    $this->entityManager->flush();
 
                     $event = new ResendInvoiceEvent($user, $transaction);
                     $this->eventDispatcher->dispatch($event, ResendInvoiceEvent::NAME);

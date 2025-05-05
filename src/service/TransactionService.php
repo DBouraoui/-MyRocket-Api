@@ -46,6 +46,7 @@ class TransactionService
             'websiteContract'=> $transaction->getWebsiteContract()->getPrestation(),
             'websiteUuid' => $transaction->getWebsiteContract()->getUuid(),
             'isPaid'=> $transaction->isPaid(),
+            'reminderAt' => $transaction->getReminderSentAt()?->format('d-m-Y H:i:s'),
         ];
     }
 

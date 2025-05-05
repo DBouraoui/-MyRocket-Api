@@ -36,10 +36,17 @@ class Transaction
     #[ORM\Column]
     private ?bool $isPaid = null;
 
+    #[ORM\Column]
+    private ?bool $isReminderSent = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $reminderSentAt = null;
+
     #[ORM\PrePersist]
     public function init() {
         $this->createdAt = new \DateTimeImmutable('now');
         $this->uuid = Uuid::v4();
+        $this->isReminderSent = false;
     }
 
     public function getId(): ?int
@@ -127,6 +134,30 @@ class Transaction
     public function setIsPaid(bool $isPaid): static
     {
         $this->isPaid = $isPaid;
+
+        return $this;
+    }
+
+    public function isReminderSent(): ?bool
+    {
+        return $this->isReminderSent;
+    }
+
+    public function setIsReminderSent(bool $isReminderSent): static
+    {
+        $this->isReminderSent = $isReminderSent;
+
+        return $this;
+    }
+
+    public function getReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->reminderSentAt;
+    }
+
+    public function setReminderSentAt(?\DateTimeImmutable $reminderSentAt): static
+    {
+        $this->reminderSentAt = $reminderSentAt;
 
         return $this;
     }
