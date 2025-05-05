@@ -4,6 +4,8 @@ namespace App\Command;
 
 use App\Entity\Transaction;
 use App\Event\TransactionCreateEvent;
+use App\Event\TransactionRapportAdmin;
+use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -20,10 +22,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CheckInvoiceUser extends Command
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private readonly LoggerInterface           $logger,
         private readonly WebsiteContractRepository $websiteContractRepository,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly EventDispatcherInterface $eventDispatcher
+        private readonly EntityManagerInterface    $entityManager,
+        private readonly EventDispatcherInterface  $eventDispatcher, private readonly UserRepository $userRepository
     ) {
         parent::__construct();
     }
@@ -47,6 +49,8 @@ class CheckInvoiceUser extends Command
 
             $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($websiteContracts)));
 
+            $data = [];
+
             foreach ($websiteContracts as $contract) {
                 $user = $contract->getUser();
 
@@ -54,10 +58,13 @@ class CheckInvoiceUser extends Command
                 $transaction->setUser($user);
                 $transaction->setWebsiteContract($contract);
                 $transaction->setTva($contract->getTva());
-                $transaction->setAmount(($contract->getAnnualCost() / 12));
+                $transaction->setAmount($contract->getAnnualCost());
+                $transaction->setIsPaid(false);
 
                 $contract->setNextPaymentAt(new \DateTimeImmutable('+30 days'));
                 $contract->setLastPaymentAt(new \DateTimeImmutable());
+
+                $data[] = $transaction;
 
                 $this->entityManager->persist($transaction);
                 $this->entityManager->flush();
@@ -69,6 +76,12 @@ class CheckInvoiceUser extends Command
                 $this->logger->info('Facture envoyée pour ' . $user->getEmail());
                 $output->writeln('Facture envoyée pour ' . $user->getEmail());
             }
+
+            $user = $this->userRepository->findOneBy(['email' => 'dylan.bouraoui@epitech.eu']);
+
+            $event = new TransactionRapportAdmin($data,$user);
+            $this->eventDispatcher->dispatch($event, TransactionRapportAdmin::NAME);
+
 
             return Command::SUCCESS;
         } catch(\Exception $e) {

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facture en attente de paiement</title>
+    <title>Rapport d'envoi de factures</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: #0f52ba;
             --secondary-color: #4a89dc;
             --accent-color: #e74c3c;
-            --warning-color: #f39c12;
+            --success-color: #2ecc71;
             --light-bg: #f8fafc;
             --dark-bg: #1a365d;
             --text-color: #334155;
@@ -40,7 +40,7 @@
 
         .container {
             width: 100%;
-            max-width: 650px;
+            max-width: 750px;
             margin: 0 auto;
             background-color: white;
             border-radius: var(--border-radius);
@@ -98,7 +98,7 @@
             max-width: 600px;
         }
 
-        .transaction-icon {
+        .report-icon {
             flex-shrink: 0;
             width: 60px;
             height: 60px;
@@ -184,87 +184,117 @@
             border-bottom: none;
         }
 
-        .info-label {
-            font-weight: 500;
-            color: var(--text-color);
+        .email-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
         }
 
-        .info-value {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 18px 0 8px;
-            border-top: 2px solid rgba(0,0,0,0.08);
-            margin-top: 10px;
-        }
-
-        .total-label {
-            font-weight: 700;
-            color: var(--dark-bg);
-            font-size: 1.1rem;
-        }
-
-        .total-value {
-            font-weight: 700;
-            color: var(--accent-color);
-            font-size: 1.2rem;
-        }
-
-        .warning-message {
-            margin-top: 30px;
-            background-color: rgba(243, 156, 18, 0.08);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            font-size: 1.05rem;
-            color: #d35400;
-            font-weight: 500;
-            position: relative;
+        .email-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #f8fafc;
+            border: 1px solid rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.08);
-            border: 1px solid rgba(243, 156, 18, 0.15);
+            justify-content: space-between;
         }
 
-        .warning-message::before {
-            content: "\f071";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #f39c12;
-            font-size: 1.3rem;
+        .email-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .pay-button {
-            display: inline-block;
-            background-color: var(--accent-color);
-            color: white;
-            text-align: center;
-            padding: 14px 28px;
-            border-radius: 6px;
-            text-decoration: none;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 600;
             font-size: 1.1rem;
-            margin: 30px 0 10px;
-            transition: var(--transition);
-            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
-            width: 100%;
         }
 
-        .pay-button:hover {
-            background-color: #c0392b;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(231, 76, 60, 0.3);
+        .user-info {
+            display: flex;
+            flex-direction: column;
         }
 
-        .pay-button i {
-            margin-right: 8px;
+        .user-name {
+            font-weight: 600;
+            color: var(--dark-bg);
         }
 
-        .contact-button {
+        .user-email {
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .invoice-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .invoice-amount {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .invoice-date {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .status-pending {
+            background-color: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fdba74;
+        }
+
+        .summary-card {
+            background-color: #f0f9ff;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #bae6fd;
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #0369a1;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-bg);
+        }
+
+        .action-button {
             display: inline-block;
             background-color: var(--secondary-color);
             color: white;
@@ -274,33 +304,19 @@
             text-decoration: none;
             font-weight: 500;
             font-size: 1rem;
-            margin: 15px 0 5px;
+            margin: 25px 0 5px;
             transition: var(--transition);
             box-shadow: 0 4px 10px rgba(74, 137, 220, 0.2);
         }
 
-        .contact-button:hover {
+        .action-button:hover {
             background-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(74, 137, 220, 0.3);
         }
 
-        .contact-button i {
+        .action-button i {
             margin-right: 8px;
-        }
-
-        .invoice-id {
-            font-family: monospace;
-            background-color: #f1f5f9;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
-        }
-
-        .due-date {
-            color: var(--accent-color);
-            font-weight: 600;
         }
 
         .footer {
@@ -357,7 +373,7 @@
                 padding: 25px 20px;
             }
 
-            .transaction-icon {
+            .report-icon {
                 margin-left: 0;
                 align-self: center;
             }
@@ -373,6 +389,17 @@
             .card {
                 padding: 20px;
             }
+
+            .email-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .invoice-details {
+                align-items: flex-start;
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -380,69 +407,64 @@
 <div class="container">
     <div class="header">
         <div class="header-content">
-            <h1>Facture en attente de paiement</h1>
-            <p>Une nouvelle facture est disponible pour règlement</p>
+            <h1>Rapport d'envoi de factures</h1>
+            <p>Récapitulatif des factures en attente de paiement</p>
         </div>
-        <div class="transaction-icon">
-            <i class="fas fa-file-invoice-dollar"></i>
+        <div class="report-icon">
+            <i class="fas fa-file-invoice"></i>
         </div>
     </div>
 
     <div class="welcome-text">
-        Bonjour {{ user.email }}
+        Rapport du {{ "now"|date('d/m/Y') }}
     </div>
 
     <div class="content">
-        <p><strong>Une nouvelle facture a été générée et est en attente de paiement.</strong></p>
-
-        <p>Nous vous informons qu'une facture a été émise sur votre compte et nécessite votre règlement. Vous trouverez ci-dessous le détail de cette facture.</p>
+        <p><strong>Voici la liste des clients pour lesquels des factures ont été générées et sont en attente de paiement.</strong></p>
 
         <div class="card">
             <div class="card-title">
-                <i class="fas fa-info-circle"></i> Détails de la facture
+                <i class="fas fa-users"></i> Liste des clients facturés
             </div>
 
-            <div class="info-row">
-                <div class="info-label">Numéro de facture</div>
-                <div class="info-value invoice-id">{{ transaction.uuid|slice(0, 8) }}...</div>
+            <ul class="email-list">
+                {% for transaction in transactions %}
+                    <li class="email-item">
+                        <div class="email-user">
+                            <div class="user-avatar">
+                                {{ transaction.user.email}}
+                            </div>
+                        </div>
+                        <div class="invoice-details">
+                            <span class="invoice-amount">{{ transaction.amount|round(2) }} €</span>
+                            <span class="invoice-date">{{ transaction.createdAt|date('d/m/Y') }}</span>
+                            <span class="status-badge status-pending">
+                            <i class="fas fa-clock" style="margin-right: 5px;"></i> En attente
+                        </span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-info">
+                <span class="summary-label">Total de factures</span>
+                <span class="summary-value">{{ transactions|length }}</span>
             </div>
-            <div class="info-row">
-                <div class="info-label">Date d'émission</div>
-                <div class="info-value">{{ transaction.createdAt|date('d/m/Y') }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">Date d'échéance</div>
-                <div class="info-value due-date">{{ transaction.createdAt|date_modify('+15 days')|date('d/m/Y') }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">Montant HT</div>
-                <div class="info-value">{{ (transaction.amount / (1 + transaction.tva / 100))|round(2) }} €</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">TVA ({{ transaction.tva }}%)</div>
-                <div class="info-value">{{ (transaction.amount - (transaction.amount / (1 + transaction.tva / 100)))|round(2) }} €</div>
-            </div>
-            <div class="total-row">
-                <div class="total-label">Total à régler</div>
-                <div class="total-value">{{ transaction.amount|round(2) }} €</div>
+            <div class="summary-info">
+                <span class="summary-label">Montant total</span>
+                <span class="summary-value">{{ transactions|reduce((carry, transaction) => carry + transaction.amount, 0)|round(2) }} €</span>
             </div>
         </div>
 
-        <div class="warning-message">
-            Cette facture est à régler avant le {{ transaction.createdAt|date_modify('+15 days')|date('d/m/Y') }}. Veuillez procéder au paiement pour éviter des frais de retard.
-        </div>
-
-        <a href="#" class="pay-button">
-            <i class="fas fa-credit-card"></i> Payer maintenant
-        </a>
-
-        <a href="#" class="contact-button">
-            <i class="fas fa-envelope"></i> Nous contacter
+        <a href="#" class="action-button">
+            <i class="fas fa-chart-line"></i> Voir le dashboard complet
         </a>
     </div>
 
     <div class="footer">
-        <p>Cordialement,<br>L'équipe de MyRocket</p>
+        <p>Ce rapport est généré automatiquement.<br>MyRocket - Système de facturation</p>
 
         <div class="company-info">
             <div class="company-logo">

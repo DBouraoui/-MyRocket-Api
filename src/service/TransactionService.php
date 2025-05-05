@@ -22,8 +22,9 @@ class TransactionService
             $transaction = new Transaction();
             $transaction->setUser($user);
             $transaction->setWebsiteContract($websiteContract);
-            $transaction->setAmount(($websiteContract->getAnnualCost() / 12));
+            $transaction->setAmount($websiteContract->getAnnualCost());
             $transaction->setTva($websiteContract->getTva());
+            $transaction->setIsPaid(false);
 
             $this->entityManager->persist($transaction);
             $this->entityManager->flush();
@@ -44,6 +45,7 @@ class TransactionService
             'userUuid' => $transaction->getUser()->getUuid(),
             'websiteContract'=> $transaction->getWebsiteContract()->getPrestation(),
             'websiteUuid' => $transaction->getWebsiteContract()->getUuid(),
+            'isPaid'=> $transaction->isPaid(),
         ];
     }
 

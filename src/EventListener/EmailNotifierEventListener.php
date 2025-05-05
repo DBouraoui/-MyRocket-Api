@@ -3,6 +3,7 @@
 namespace App\EventListener;
 
 use App\Event\TransactionCreateEvent;
+use App\Event\TransactionRapportAdmin;
 use App\Event\UserRegistredEvent;
 use App\Event\WebsiteContractEvent;
 use App\Event\WebsiteCreateEvent;
@@ -32,6 +33,7 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
             WebsiteCredentialsEvent::NAME => 'onWebsiteCredentials',
             WebsiteContractEvent::NAME => 'onWebsiteContract',
             TransactionCreateEvent::NAME => 'onTransactionCreate',
+            TransactionRapportAdmin::NAME => 'onTransactionRapportAdmin',
         ];
     }
 
@@ -55,6 +57,29 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
                 $context
             );
             $this->logger->info("Facture envoyer à ". $user->getEmail());
+        } catch(\Exception $e) {
+            $this->logger->error($e->getMessage());
+            Throw new \Exception($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    public function onTransactionRapportAdmin(TransactionRapportAdmin $event): void
+    {
+        try {
+            $data = $event->getData();
+            $user = $event->getUser();
+
+            $context = [
+                'template'=>TransactionRapportAdmin::TEMPLATE_NAME,
+                'transactions'=>$data
+            ];
+
+            $this->emailService->generate($user,
+            'Rapport d\'envoie des facture',
+            $context);
+
+            $this->logger->info("Rapport de facture envoyer à ". $user->getEmail());
+
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             Throw new \Exception($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);

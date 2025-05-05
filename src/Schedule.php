@@ -21,7 +21,7 @@ class Schedule implements ScheduleProviderInterface
     {
         return (new SymfonySchedule())
             ->add(
-                RecurringMessage::cron('0 6 * * *',
+                RecurringMessage::cron('*/1 * * * *',
                     new RunCommandMessage('app:check-invoice-user')),
 
             )

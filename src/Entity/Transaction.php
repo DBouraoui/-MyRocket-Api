@@ -33,6 +33,9 @@ class Transaction
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\Column]
+    private ?bool $isPaid = null;
+
     #[ORM\PrePersist]
     public function init() {
         $this->createdAt = new \DateTimeImmutable('now');
@@ -112,6 +115,18 @@ class Transaction
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function isPaid(): ?bool
+    {
+        return $this->isPaid;
+    }
+
+    public function setIsPaid(bool $isPaid): static
+    {
+        $this->isPaid = $isPaid;
 
         return $this;
     }
