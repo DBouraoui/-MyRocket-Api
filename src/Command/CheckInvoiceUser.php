@@ -58,7 +58,7 @@ class CheckInvoiceUser extends Command
                 $transaction->setUser($user);
                 $transaction->setWebsiteContract($contract);
                 $transaction->setTva($contract->getTva());
-                $transaction->setAmount($contract->getAnnualCost());
+                $transaction->setAmount($contract->getMonthlyCost());
                 $transaction->setIsPaid(false);
 
                 $contract->setNextPaymentAt(new \DateTimeImmutable('+30 days'));

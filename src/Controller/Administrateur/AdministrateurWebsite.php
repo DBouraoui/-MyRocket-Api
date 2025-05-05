@@ -199,7 +199,7 @@ class AdministrateurWebsite extends AbstractController
                     if ($websiteContract->getWebsiteContract()) {
                         $websiteData['contract'] = [
                             'uuid' => $websiteContract->getWebsiteContract()->getUuid(),
-                            'annualCost' => $websiteContract->getWebsiteContract()->getAnnualCost(),
+                            'monthlyCost' => $websiteContract->getWebsiteContract()->getmonthlyCost(),
                             'tva' => $websiteContract->getWebsiteContract()->getTva(),
                             'reccurence' => $websiteContract->getWebsiteContract()->getReccurence(),
                             'createdAt' => $websiteContract->getWebsiteContract()->getCreatedAt()->format("d-m-Y"),
