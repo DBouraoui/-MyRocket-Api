@@ -2,6 +2,7 @@
 
 namespace App\service;
 
+use App\Entity\Notification;
 use App\Entity\User;
 use App\Entity\Website;
 use App\Entity\WebsiteContract;
@@ -18,7 +19,6 @@ class WebsiteService
     use ExeptionTrait;
     public const CONFIGURATION_NOT_FOUND = "Configuration not found";
     public const CONFIGURATION_ALREADY_EXISTS = "Configuration already exists";
-    public const MISSING_URL_PARAMETER = "Missing URL parameter";
 
     public function __construct
     (
@@ -45,6 +45,15 @@ class WebsiteService
             $this->entityManager->persist($website);
             $this->entityManager->flush();
 
+            $notification = new Notification();
+            $notification->setUser($user);
+            $notification->setIsPriotity(false);
+            $notification->setTitle(NotificationService::WEBSITE_CREATED_TITLE);
+            $notification->setDescription(NotificationService::WEBSITE_CREATED_DESCRIPTION);
+
+            $this->entityManager->persist($notification);
+            $this->entityManager->flush();
+
             return $website;
         } catch (\Exception $e) {
             Throw new \Exception($e->getMessage(),$e->getCode());
@@ -61,6 +70,15 @@ class WebsiteService
             $websiteMutualised->setWebsite($website);
 
             $this->entityManager->persist($websiteMutualised);
+            $this->entityManager->flush();
+
+            $notification = new Notification();
+            $notification->setUser($website->getUser());
+            $notification->setIsPriotity(false);
+            $notification->setTitle(NotificationService::WEBSITE_CONFIG_CREATED_TITLE);
+            $notification->setDescription(NotificationService::WEBSITE_CONFIG_CREATED_DESCRIPTION);
+
+            $this->entityManager->persist($notification);
             $this->entityManager->flush();
 
             return $websiteMutualised;
@@ -82,6 +100,17 @@ class WebsiteService
 
             $this->entityManager->persist($websitevps);
             $this->entityManager->flush();
+
+            $notification = new Notification();
+            $notification->setUser($website->getUser());
+            $notification->setIsPriotity(false);
+            $notification->setTitle(NotificationService::WEBSITE_CONFIG_CREATED_TITLE);
+            $notification->setDescription(NotificationService::WEBSITE_CONFIG_CREATED_DESCRIPTION);
+
+            $this->entityManager->persist($notification);
+            $this->entityManager->flush();
+
+
             return $websitevps;
         } catch(\Exception $e) {
             Throw new \Exception($e->getMessage(),$e->getCode());
@@ -108,6 +137,15 @@ class WebsiteService
             $websiteContract->setReccurence($data['reccurence']);
 
             $this->entityManager->persist($websiteContract);
+            $this->entityManager->flush();
+
+            $notification = new Notification();
+            $notification->setUser($user);
+            $notification->setTitle(NotificationService::WEBSITE_CONTRACT_CREATED_TITLE);
+            $notification->setDescription(NotificationService::WEBSITE_CONTRACT_CREATED_DESCRIPTION);
+            $notification->setIsPriotity(false);
+
+            $this->entityManager->persist($notification);
             $this->entityManager->flush();
 
             return $websiteContract;

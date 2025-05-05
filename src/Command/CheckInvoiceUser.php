@@ -2,11 +2,13 @@
 
 namespace App\Command;
 
+use App\Entity\Notification;
 use App\Entity\Transaction;
 use App\Event\TransactionCreateEvent;
 use App\Event\TransactionRapportAdmin;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
+use App\service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -76,6 +78,14 @@ class CheckInvoiceUser extends Command
                     $this->entityManager->persist($transaction);
                     $this->entityManager->flush();
 
+                    $notification = new Notification();
+                    $notification->setUser($user);
+                    $notification->setTitle(NotificationService::TRANSACTION_CREATED_TITLE);
+                    $notification->setDescription(NotificationService::TRANSACTION_CREATED_DESCRIPTION);
+                    $notification->setIsPriotity(true);
+
+                    $this->entityManager->persist($notification);
+                    $this->entityManager->flush();
 
                     $event = new TransactionCreateEvent($user, $transaction);
                     $this->eventDispatcher->dispatch($event, TransactionCreateEvent::NAME);
