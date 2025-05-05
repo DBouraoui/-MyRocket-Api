@@ -21,7 +21,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class AdministrateurWebsiteContract extends AbstractController
 {
-    public const POST_REQUIRE_FIELDS = ['uuidWebsite', 'annualCost', 'reccurence', 'prestation', 'firstPaymentAt', 'lastPaymentAt', 'nextPaymentAt'];
+    public const POST_REQUIRE_FIELDS = ['uuidWebsite', 'monthlyCost', 'reccurence', 'prestation', 'firstPaymentAt', 'lastPaymentAt', 'nextPaymentAt'];
 
     public function __construct
     (

@@ -20,7 +20,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class WebsiteContractController extends AbstractController
 {
 
-    public function __construct(private readonly LoggerInterface $logger, private readonly WebsiteService $websiteService, private readonly WebsiteRepository $websiteRepository, private readonly EntityManagerInterface $entityManager, private readonly UserRepository $userRepository)
+    public function __construct
+    (
+        private readonly LoggerInterface $logger,
+        private readonly WebsiteService $websiteService,
+    )
     {
     }
 
@@ -58,7 +62,7 @@ final class WebsiteContractController extends AbstractController
                 if ($websiteContract->getWebsiteContract()) {
                     $websiteData['contract'] = [
                         'uuid' => $websiteContract->getWebsiteContract()->getUuid(),
-                        'annualCost' => $websiteContract->getWebsiteContract()->getAnnualCost(),
+                        'monthlyCost' => $websiteContract->getWebsiteContract()->getmonthlyCost(),
                         'tva' => $websiteContract->getWebsiteContract()->getTva(),
                         'reccurence' => $websiteContract->getWebsiteContract()->getReccurence(),
                         'createdAt' => $websiteContract->getWebsiteContract()->getCreatedAt()->format("d-m-Y"),

@@ -2,6 +2,8 @@
 
 namespace App\EventListener;
 
+use App\Event\ResendInvoiceEvent;
+use App\Event\ResendInvoiceRapportAdminEvent;
 use App\Event\TransactionCreateEvent;
 use App\Event\TransactionRapportAdmin;
 use App\Event\UserRegistredEvent;
@@ -34,7 +36,52 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
             WebsiteContractEvent::NAME => 'onWebsiteContract',
             TransactionCreateEvent::NAME => 'onTransactionCreate',
             TransactionRapportAdmin::NAME => 'onTransactionRapportAdmin',
+            ResendInvoiceEvent::NAME => 'onResendInvoice',
+            ResendInvoiceRapportAdminEvent::NAME => 'onResendInvoiceRapportAdmin',
         ];
+    }
+
+    public function onResendInvoice(ResendInvoiceEvent $event): void
+    {
+        try {
+            $user = $event->getUser();
+            $transaction = $event->getTransactions();
+
+            $context = [
+                'template'=>ResendInvoiceEvent::TEMPLATE_NAME,
+                'user'=>$user,
+                'transaction'=>$transaction,
+            ];
+
+            $this->emailService->generate($user, 'Rappel une facture est disponible sur votre espace client',
+                $context
+            );
+
+            $this->logger->info("Relance facture impayer envoyer à ". $user->getEmail());
+        } catch(\Exception $e) {
+            $this->logger->error($e->getMessage());
+            Throw new \Exception($e->getMessage(),Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function onResendInvoiceRapportAdmin(ResendInvoiceRapportAdminEvent $event): void
+    {
+        try {
+            $user = $event->getUser();
+            $websiteContract = $event->getWebsiteContract();
+
+            $context = [
+                'template'=>ResendInvoiceRapportAdminEvent::TEMPLATE_NAME,
+                'user'=>$user,
+                'transactions'=>$websiteContract,
+            ];
+            $this->emailService->generate($user, 'Rapport d\'envoie des facture impayer', $context);
+
+            $this->logger->info("Rapport des facture impayer envoeyr a l'admin ". $user->getEmail());
+        } catch ( \Exception $e) {
+            $this->logger->error($e->getMessage());
+            throw new \Exception($e->getMessage(),Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -78,7 +125,7 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
             'Rapport d\'envoie des facture',
             $context);
 
-            $this->logger->info("Rapport de facture envoyer à ". $user->getEmail());
+            $this->logger->info("Rapport de facture envoyer à l'admin ". $user->getEmail());
 
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());

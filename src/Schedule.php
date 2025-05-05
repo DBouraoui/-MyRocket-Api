@@ -23,7 +23,10 @@ class Schedule implements ScheduleProviderInterface
             ->add(
                 RecurringMessage::cron('*/1 * * * *',
                     new RunCommandMessage('app:check-invoice-user')),
-
+            )
+            ->add(
+                RecurringMessage::cron('*/1 * * * *',
+                    new RunCommandMessage('app:resend-invoice-user'))
             )
             ->stateful($this->cache) // ensure missed tasks are executed
             ->processOnlyLastMissedRun(true) // ensure only last missed task is run

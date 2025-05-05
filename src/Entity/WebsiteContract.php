@@ -21,7 +21,7 @@ class WebsiteContract
     private ?string $uuid = null;
 
     #[ORM\Column(length: 10)]
-    private ?string $annualCost = null;
+    private ?string $monthlyCost = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $tva = null;
@@ -94,14 +94,14 @@ class WebsiteContract
         return $this;
     }
 
-    public function getAnnualCost(): ?string
+    public function getmonthlyCost(): ?string
     {
-        return $this->annualCost;
+        return $this->monthlyCost;
     }
 
-    public function setAnnualCost(string $annualCost): static
+    public function setmonthlyCost(string $monthlyCost): static
     {
-        $this->annualCost = $annualCost;
+        $this->monthlyCost = $monthlyCost;
 
         return $this;
     }

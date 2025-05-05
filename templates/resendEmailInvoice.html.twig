@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Récapitulatif de votre contrat</title>
+    <title>Relance de facture impayée</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: #0f52ba;
             --secondary-color: #4a89dc;
             --accent-color: #e74c3c;
-            --success-color: #2ecc71;
+            --warning-color: #f39c12;
             --light-bg: #f8fafc;
             --dark-bg: #1a365d;
             --text-color: #334155;
@@ -98,7 +98,7 @@
             max-width: 600px;
         }
 
-        .document-icon {
+        .reminder-icon {
             flex-shrink: 0;
             width: 60px;
             height: 60px;
@@ -115,22 +115,30 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .content {
-            padding: 35px 30px;
+        .welcome-text {
+            padding: 25px 30px 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
-        .intro-text {
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            color: var(--text-color);
+        .content {
+            padding: 30px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
             line-height: 1.6;
+            color: var(--text-color);
         }
 
         .card {
             background-color: white;
             border-radius: var(--border-radius);
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 25px;
+            margin: 25px 0;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
             position: relative;
             overflow: hidden;
@@ -144,15 +152,15 @@
             left: 0;
             width: 6px;
             height: 100%;
-            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(to bottom, var(--accent-color), #c0392b);
             border-radius: 3px 0 0 3px;
         }
 
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 25px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -161,84 +169,99 @@
         }
 
         .card-title i {
-            color: var(--secondary-color);
+            color: var(--accent-color);
             font-size: 1.1em;
         }
 
-        .contract-details {
-            font-size: 1rem;
-        }
-
-        .detail-row {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            padding: 14px 0;
-            border-bottom: 1px dashed rgba(0,0,0,0.08);
-            align-items: center;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .detail-row:first-child {
-            padding-top: 0;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: var(--primary-color);
-            padding-right: 20px;
+        .info-row {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
-        .detail-label i {
-            color: var(--secondary-color);
-            width: 20px;
-            text-align: center;
+        .info-row:last-child {
+            border-bottom: none;
         }
 
-        .detail-value {
+        .info-label {
+            font-weight: 500;
             color: var(--text-color);
-            font-family: 'SF Pro Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--light-bg);
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 1px solid rgba(0,0,0,0.05);
-            transition: var(--transition);
         }
 
-        .detail-row:hover .detail-value {
-            background-color: #e9f0fd;
-            border-color: rgba(74, 137, 220, 0.2);
-            transform: translateY(-1px);
+        .info-value {
+            font-weight: 600;
+            color: var(--accent-color);
         }
 
-        .important {
-            margin-top: 25px;
-            background-color: rgba(74, 137, 220, 0.08);
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 18px 0 8px;
+            border-top: 2px solid rgba(0,0,0,0.08);
+            margin-top: 10px;
+        }
+
+        .total-label {
+            font-weight: 700;
+            color: var(--dark-bg);
+            font-size: 1.1rem;
+        }
+
+        .total-value {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+        }
+
+        .warning-message {
+            margin-top: 30px;
+            background-color: rgba(243, 156, 18, 0.08);
             border-radius: var(--border-radius);
             padding: 20px;
-            font-size: 1rem;
-            color: var(--primary-color);
+            font-size: 1.05rem;
+            color: #d35400;
             font-weight: 500;
             position: relative;
             display: flex;
             align-items: center;
             gap: 15px;
-            box-shadow: 0 4px 12px rgba(74, 137, 220, 0.08);
-            border: 1px solid rgba(74, 137, 220, 0.15);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.08);
+            border: 1px solid rgba(243, 156, 18, 0.15);
         }
 
-        .important::before {
-            content: "\f05a";
+        .warning-message::before {
+            content: "\f071";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
-            color: var(--secondary-color);
+            color: #f39c12;
             font-size: 1.3rem;
+        }
+
+        .pay-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            text-align: center;
+            padding: 14px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 30px 0 10px;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
+            width: 100%;
+        }
+
+        .pay-button:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .pay-button i {
+            margin-right: 8px;
         }
 
         .contact-button {
@@ -251,7 +274,7 @@
             text-decoration: none;
             font-weight: 500;
             font-size: 1rem;
-            margin: 25px 0;
+            margin: 15px 0 5px;
             transition: var(--transition);
             box-shadow: 0 4px 10px rgba(74, 137, 220, 0.2);
         }
@@ -264,6 +287,22 @@
 
         .contact-button i {
             margin-right: 8px;
+        }
+
+        .contract-badge {
+            display: inline-block;
+            background-color: #f3f4f6;
+            color: #4b5563;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .due-date {
+            color: var(--accent-color);
+            font-weight: 600;
         }
 
         .footer {
@@ -320,27 +359,17 @@
                 padding: 25px 20px;
             }
 
-            .document-icon {
+            .reminder-icon {
                 margin-left: 0;
                 align-self: center;
-            }
-
-            .detail-row {
-                grid-template-columns: 1fr;
-                gap: 8px;
-                padding: 16px 0;
-            }
-
-            .detail-label {
-                margin-bottom: 5px;
             }
 
             .header h1 {
                 font-size: 1.5rem;
             }
 
-            .content {
-                padding: 25px 20px;
+            .content, .welcome-text {
+                padding: 20px;
             }
 
             .card {
@@ -353,63 +382,65 @@
 <div class="container">
     <div class="header">
         <div class="header-content">
-            <h1>Récapitulatif de votre contrat</h1>
-            <p>Merci pour votre confiance. Voici les détails de votre abonnement.</p>
+            <h1>Relance de facture impayée</h1>
+            <p>Une facture est en attente de règlement dans votre espace personnel</p>
         </div>
-        <div class="document-icon">
-            <i class="fas fa-file-contract"></i>
+        <div class="reminder-icon">
+            <i class="fas fa-bell"></i>
         </div>
     </div>
 
+    <div class="welcome-text">
+        Bonjour, {{ user.email }}
+    </div>
+
     <div class="content">
-        <p class="intro-text">Un petit récapitulatif des informations de votre contrat :</p>
+        <p><strong>
+                {% if user.companyName %}
+                    {{ user.companyName }}
+                {% else %}
+                    {{ user.firstname }} {{ user.lastname }}
+                {% endif %},
+            </strong></p>
+
+        <p>Nous vous informons qu'une facture est actuellement en attente de règlement dans votre espace personnel. Nous vous invitons à procéder au paiement dans les meilleurs délais pour éviter tout retard ou pénalité.</p>
 
         <div class="card">
             <div class="card-title">
-                <i class="fas fa-clipboard-list"></i> Détails de votre contrat
+                <i class="fas fa-file-invoice-dollar"></i> Détails du contrat concerné
             </div>
 
-            <div class="contract-details">
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-tag"></i> Prestation :</div>
-                    <div class="detail-value">{{ websiteContract.prestation }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-sync"></i> Récurrence :</div>
-                    <div class="detail-value">{{ websiteContract.reccurence }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-calendar-plus"></i> Date de création :</div>
-                    <div class="detail-value">{{ websiteContract.createdAt|date('d/m/Y') }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-credit-card"></i> Date du premier paiement :</div>
-                    <div class="detail-value">{{ websiteContract.firstPaymentAt|date('d/m/Y') }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-calendar-day"></i> Date du prochain paiement :</div>
-                    <div class="detail-value">{{ websiteContract.nextPaymentAt|date('d/m/Y') }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-percent"></i> TVA applicable :</div>
-                    <div class="detail-value">{{ websiteContract.tva }}%</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-coins"></i> Coût annuel :</div>
-                    <div class="detail-value">{{ websiteContract.monthlyCost|number_format(2, ',', ' ') }} €</div>
-                </div>
+            <div class="info-row">
+                <div class="info-label">Référence</div>
+                <div class="info-value contract-badge">{{ transaction.uuid|slice(0, 8) }}...</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Dernière mise à jour</div>
+                <div class="info-value">{{ transaction.createdAt|date('d/m/Y') }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Montant mensuel HT</div>
+                <div class="info-value">{{ (transaction.amount / (1 + transaction.tva / 100))|round(2) }} €</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">TVA ({{ transaction.tva }}%)</div>
+                <div class="info-value">{{ (transaction.amount - (transaction.amount / (1 + transaction.tva / 100)))|round(2) }} €</div>
+            </div>
+            <div class="total-row">
+                <div class="total-label">Total TTC à régler</div>
+                <div class="total-value">{{ transaction.amount|round(2) }} €</div>
             </div>
         </div>
 
-        <p class="important">Si vous avez des questions concernant ce contrat, n'hésitez pas à nous contacter.</p>
+        <div class="warning-message">
+            Le règlement de cette facture est désormais en retard. Veuillez procéder au paiement dans les 5 jours ouvrés pour éviter une suspension temporaire de service.
+        </div>
 
-        <a href="#contact" class="contact-button">
+        <a href="#" class="pay-button">
+            <i class="fas fa-credit-card"></i> Régler maintenant
+        </a>
+
+        <a href="#" class="contact-button">
             <i class="fas fa-envelope"></i> Nous contacter
         </a>
     </div>

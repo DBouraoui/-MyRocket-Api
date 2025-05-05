@@ -22,7 +22,7 @@ class TransactionService
             $transaction = new Transaction();
             $transaction->setUser($user);
             $transaction->setWebsiteContract($websiteContract);
-            $transaction->setAmount($websiteContract->getAnnualCost());
+            $transaction->setAmount($websiteContract->getmonthlyCost());
             $transaction->setTva($websiteContract->getTva());
             $transaction->setIsPaid(false);
 

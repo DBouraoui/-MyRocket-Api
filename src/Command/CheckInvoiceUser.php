@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'app:check-invoice-user',
-    description: 'Vérifie les factures impayées et crée des transactions',
+    description: 'Vérifie les factures du jour à payer et crée des factures',
 )]
 class CheckInvoiceUser extends Command
 {
@@ -25,7 +25,8 @@ class CheckInvoiceUser extends Command
         private readonly LoggerInterface           $logger,
         private readonly WebsiteContractRepository $websiteContractRepository,
         private readonly EntityManagerInterface    $entityManager,
-        private readonly EventDispatcherInterface  $eventDispatcher, private readonly UserRepository $userRepository
+        private readonly EventDispatcherInterface  $eventDispatcher,
+        private readonly UserRepository $userRepository
     ) {
         parent::__construct();
     }
@@ -38,49 +39,58 @@ class CheckInvoiceUser extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $this->logger->info('Check des factures impayées...');
-            $output->writeln('Vérification des factures impayées...');
+            $this->logger->info('Check des factures à payer...');
+            $output->writeln('Vérification des factures à payer...');
+
+            $today = new \DateTime('today');
+            $tomorrow = new \DateTime('tomorrow');
 
             $websiteContracts = $this->websiteContractRepository->createQueryBuilder('c')
-                ->where('c.nextPaymentAt <= :today')
-                ->setParameter('today', new \DateTime('today'))
+                ->where('c.nextPaymentAt >= :today')
+                ->andWhere('c.nextPaymentAt < :tomorrow')
+                ->setParameter('today', $today)
+                ->setParameter('tomorrow', $tomorrow)
                 ->getQuery()
                 ->getResult();
 
             $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($websiteContracts)));
 
-            $data = [];
+            if (!empty($websiteContracts)) {
+                $data = [];
 
-            foreach ($websiteContracts as $contract) {
-                $user = $contract->getUser();
+                foreach ($websiteContracts as $contract) {
+                    $user = $contract->getUser();
 
-                $transaction = new Transaction();
-                $transaction->setUser($user);
-                $transaction->setWebsiteContract($contract);
-                $transaction->setTva($contract->getTva());
-                $transaction->setAmount($contract->getAnnualCost());
-                $transaction->setIsPaid(false);
+                    $transaction = new Transaction();
+                    $transaction->setUser($user);
+                    $transaction->setWebsiteContract($contract);
+                    $transaction->setTva($contract->getTva());
+                    $transaction->setAmount($contract->getMonthlyCost());
+                    $transaction->setIsPaid(false);
 
-                $contract->setNextPaymentAt(new \DateTimeImmutable('+30 days'));
-                $contract->setLastPaymentAt(new \DateTimeImmutable());
+                    $contract->setNextPaymentAt(new \DateTimeImmutable('+30 days'));
+                    $contract->setLastPaymentAt(new \DateTimeImmutable());
 
-                $data[] = $transaction;
+                    $data[] = $transaction;
 
-                $this->entityManager->persist($transaction);
-                $this->entityManager->flush();
+                    $this->entityManager->persist($transaction);
+                    $this->entityManager->flush();
 
 
-                $event = new TransactionCreateEvent($user, $transaction);
-                $this->eventDispatcher->dispatch($event, TransactionCreateEvent::NAME);
+                    $event = new TransactionCreateEvent($user, $transaction);
+                    $this->eventDispatcher->dispatch($event, TransactionCreateEvent::NAME);
 
-                $this->logger->info('Facture envoyée pour ' . $user->getEmail());
-                $output->writeln('Facture envoyée pour ' . $user->getEmail());
+                    $this->logger->info('Facture envoyée pour ' . $user->getEmail());
+                    $output->writeln('Facture envoyée pour ' . $user->getEmail());
+                }
+
+                $user = $this->userRepository->findOneBy(['email' => 'dylan.bouraoui@epitech.eu']);
+
+                $event = new TransactionRapportAdmin($data,$user);
+                $this->eventDispatcher->dispatch($event, TransactionRapportAdmin::NAME);
+            } else {
+                $this->logger->warning('Aucune facture en à envoyer');
             }
-
-            $user = $this->userRepository->findOneBy(['email' => 'dylan.bouraoui@epitech.eu']);
-
-            $event = new TransactionRapportAdmin($data,$user);
-            $this->eventDispatcher->dispatch($event, TransactionRapportAdmin::NAME);
 
 
             return Command::SUCCESS;

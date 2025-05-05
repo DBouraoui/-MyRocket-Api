@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Récapitulatif de votre contrat</title>
+    <title>Rapport de relance de factures</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: #0f52ba;
             --secondary-color: #4a89dc;
             --accent-color: #e74c3c;
-            --success-color: #2ecc71;
+            --warning-color: #f39c12;
             --light-bg: #f8fafc;
             --dark-bg: #1a365d;
             --text-color: #334155;
@@ -40,7 +40,7 @@
 
         .container {
             width: 100%;
-            max-width: 650px;
+            max-width: 750px;
             margin: 0 auto;
             background-color: white;
             border-radius: var(--border-radius);
@@ -98,7 +98,7 @@
             max-width: 600px;
         }
 
-        .document-icon {
+        .report-icon {
             flex-shrink: 0;
             width: 60px;
             height: 60px;
@@ -115,22 +115,30 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .content {
-            padding: 35px 30px;
+        .welcome-text {
+            padding: 25px 30px 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
-        .intro-text {
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            color: var(--text-color);
+        .content {
+            padding: 30px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
             line-height: 1.6;
+            color: var(--text-color);
         }
 
         .card {
             background-color: white;
             border-radius: var(--border-radius);
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 25px;
+            margin: 25px 0;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
             position: relative;
             overflow: hidden;
@@ -144,15 +152,15 @@
             left: 0;
             width: 6px;
             height: 100%;
-            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(to bottom, var(--accent-color), #c0392b);
             border-radius: 3px 0 0 3px;
         }
 
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--primary-color);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -165,83 +173,103 @@
             font-size: 1.1em;
         }
 
-        .contract-details {
-            font-size: 1rem;
+        .contract-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
         }
 
-        .detail-row {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            padding: 14px 0;
-            border-bottom: 1px dashed rgba(0,0,0,0.08);
-            align-items: center;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .detail-row:first-child {
-            padding-top: 0;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: var(--primary-color);
-            padding-right: 20px;
+        .contract-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #f8fafc;
+            border: 1px solid rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
         }
 
-        .detail-label i {
-            color: var(--secondary-color);
-            width: 20px;
-            text-align: center;
-        }
-
-        .detail-value {
-            color: var(--text-color);
-            font-family: 'SF Pro Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--light-bg);
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 1px solid rgba(0,0,0,0.05);
-            transition: var(--transition);
-        }
-
-        .detail-row:hover .detail-value {
-            background-color: #e9f0fd;
-            border-color: rgba(74, 137, 220, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .important {
-            margin-top: 25px;
-            background-color: rgba(74, 137, 220, 0.08);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            font-size: 1rem;
-            color: var(--primary-color);
-            font-weight: 500;
-            position: relative;
+        .contract-details {
             display: flex;
             align-items: center;
             gap: 15px;
-            box-shadow: 0 4px 12px rgba(74, 137, 220, 0.08);
-            border: 1px solid rgba(74, 137, 220, 0.15);
         }
 
-        .important::before {
-            content: "\f05a";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: var(--secondary-color);
-            font-size: 1.3rem;
+        .contract-icon {
+            width: 45px;
+            height: 45px;
+            background-color: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
         }
 
-        .contact-button {
+        .contract-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contract-prestation {
+            font-weight: 600;
+            color: var(--dark-bg);
+            margin-bottom: 4px;
+        }
+
+        .contract-id {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .contract-amount {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .amount-value {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+
+        .amount-details {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .summary-card {
+            background-color: #fef2f2;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #fee2e2;
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #991b1b;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .action-button {
             display: inline-block;
             background-color: var(--secondary-color);
             color: white;
@@ -251,19 +279,26 @@
             text-decoration: none;
             font-weight: 500;
             font-size: 1rem;
-            margin: 25px 0;
+            margin: 25px 0 5px;
             transition: var(--transition);
             box-shadow: 0 4px 10px rgba(74, 137, 220, 0.2);
         }
 
-        .contact-button:hover {
+        .action-button:hover {
             background-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(74, 137, 220, 0.3);
         }
 
-        .contact-button i {
+        .action-button i {
             margin-right: 8px;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            color: #64748b;
+            font-style: italic;
         }
 
         .footer {
@@ -320,31 +355,42 @@
                 padding: 25px 20px;
             }
 
-            .document-icon {
+            .report-icon {
                 margin-left: 0;
                 align-self: center;
-            }
-
-            .detail-row {
-                grid-template-columns: 1fr;
-                gap: 8px;
-                padding: 16px 0;
-            }
-
-            .detail-label {
-                margin-bottom: 5px;
             }
 
             .header h1 {
                 font-size: 1.5rem;
             }
 
-            .content {
-                padding: 25px 20px;
+            .content, .welcome-text {
+                padding: 20px;
             }
 
             .card {
                 padding: 20px;
+            }
+
+            .contract-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .contract-amount {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .summary-card {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .summary-info {
+                width: 100%;
             }
         }
     </style>
@@ -353,69 +399,70 @@
 <div class="container">
     <div class="header">
         <div class="header-content">
-            <h1>Récapitulatif de votre contrat</h1>
-            <p>Merci pour votre confiance. Voici les détails de votre abonnement.</p>
+            <h1>Rapport de relance de factures</h1>
+            <p>Récapitulatif des contrats concernés par des relances de paiement</p>
         </div>
-        <div class="document-icon">
-            <i class="fas fa-file-contract"></i>
+        <div class="report-icon">
+            <i class="fas fa-bell"></i>
         </div>
     </div>
 
+    <div class="welcome-text">
+        Rapport du {{ "now"|date('d/m/Y') }}
+    </div>
+
     <div class="content">
-        <p class="intro-text">Un petit récapitulatif des informations de votre contrat :</p>
+        <p><strong>Voici la liste des contrats concernés par l'envoi de relances de factures.</strong></p>
 
         <div class="card">
             <div class="card-title">
-                <i class="fas fa-clipboard-list"></i> Détails de votre contrat
+                <i class="fas fa-file-invoice-dollar"></i> Contrats en attente de règlement
             </div>
 
-            <div class="contract-details">
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-tag"></i> Prestation :</div>
-                    <div class="detail-value">{{ websiteContract.prestation }}</div>
+            {% if transactions is empty %}
+                <div class="empty-message">
+                    Aucun contrat n'est actuellement concerné par une relance.
                 </div>
+            {% else %}
+                <ul class="contract-list">
+                    {% for transaction in transactions %}
+                        <li class="contract-item">
+                            <div class="contract-details">
+                                <div class="contract-icon">
+                                    <i class="fas fa-file-contract"></i>
+                                </div>
+                                <div class="contract-info">
+                                    <span class="contract-id">Réf: {{ transaction.uuid|slice(0, 8) }}...</span>
+                                </div>
+                            </div>
+                            <div class="contract-amount">
+                                <div class="amount-value">{{ transaction.amount|round(2) }} €</div>
+                                <div class="amount-details">TVA {{ transaction.tva }}% incluse</div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
 
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-sync"></i> Récurrence :</div>
-                    <div class="detail-value">{{ websiteContract.reccurence }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-calendar-plus"></i> Date de création :</div>
-                    <div class="detail-value">{{ websiteContract.createdAt|date('d/m/Y') }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-credit-card"></i> Date du premier paiement :</div>
-                    <div class="detail-value">{{ websiteContract.firstPaymentAt|date('d/m/Y') }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-calendar-day"></i> Date du prochain paiement :</div>
-                    <div class="detail-value">{{ websiteContract.nextPaymentAt|date('d/m/Y') }}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-percent"></i> TVA applicable :</div>
-                    <div class="detail-value">{{ websiteContract.tva }}%</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label"><i class="fas fa-coins"></i> Coût annuel :</div>
-                    <div class="detail-value">{{ websiteContract.monthlyCost|number_format(2, ',', ' ') }} €</div>
-                </div>
+        <div class="summary-card">
+            <div class="summary-info">
+                <span class="summary-label">Nombre de factures</span>
+                <span class="summary-value">{{ transactions|length }}</span>
+            </div>
+            <div class="summary-info">
+                <span class="summary-label">Montant total à recouvrer</span>
+                <span class="summary-value">{{ transactions|reduce((carry, contract) => carry + contract.amount, 0)|round(2) }} €</span>
             </div>
         </div>
 
-        <p class="important">Si vous avez des questions concernant ce contrat, n'hésitez pas à nous contacter.</p>
-
-        <a href="#contact" class="contact-button">
-            <i class="fas fa-envelope"></i> Nous contacter
+        <a href="#" class="action-button">
+            <i class="fas fa-file-export"></i> Exporter le rapport
         </a>
     </div>
 
     <div class="footer">
-        <p>Cordialement,<br>L'équipe de MyRocket</p>
+        <p>Ce rapport est généré automatiquement.<br>MyRocket - Système de facturation</p>
 
         <div class="company-info">
             <div class="company-logo">

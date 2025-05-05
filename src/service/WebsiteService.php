@@ -103,7 +103,7 @@ class WebsiteService
             $websiteContract->setLastPaymentAt($lastPaymentAt);
             $websiteContract->setNextPaymentAt($nextPaymentAt);
             $websiteContract->setPrestation($data['prestation']);
-            $websiteContract->setAnnualCost($data['annualCost']);
+            $websiteContract->setmonthlyCost($data['monthlyCost']);
             $websiteContract->setTva($data['tva']);
             $websiteContract->setReccurence($data['reccurence']);
 
@@ -160,7 +160,7 @@ class WebsiteService
     public function normalizeWebsiteContract(WebsiteContract $websiteContract): array {
         return [
             "uuid" => $websiteContract->getUuid(),
-            "annualCost" => $websiteContract->getAnnualCost(),
+            "monthlyCost" => $websiteContract->getmonthlyCost(),
             "tva" => $websiteContract->getTva(),
             "reccurence" => $websiteContract->getReccurence(),
             "createdAt" => $websiteContract->getCreatedAt()?->format('m-d-Y'),
