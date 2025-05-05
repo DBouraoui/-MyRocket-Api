@@ -1,8 +1,8 @@
 <?php
 namespace App\Event;
 
+use App\Entity\Transaction;
 use App\Entity\User;
-use App\Entity\WebsiteContract;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -12,18 +12,18 @@ class ResendInvoiceEvent extends  Event {
     public const NAME = 'invoice_resend.event';
     public const TEMPLATE_NAME = 'resendEmailInvoice';
     private User $user;
-    private WebsiteContract $websiteContract;
+    private Transaction $transaction;
 
-    public function __construct(User $user, WebsiteContract $contract) {
+    public function __construct(User $user, Transaction $contract) {
         $this->user = $user;
-        $this->websiteContract = $contract;
+        $this->transaction = $contract;
     }
 
     public function getUser(): User {
         return $this->user;
     }
 
-    public function getWebsiteContract(): WebsiteContract {
-        return $this->websiteContract;
+    public function getTransactions(): Transaction {
+        return $this->transaction;
     }
 }

@@ -42,9 +42,14 @@ class CheckInvoiceUser extends Command
             $this->logger->info('Check des factures à payer...');
             $output->writeln('Vérification des factures à payer...');
 
+            $today = new \DateTime('today');
+            $tomorrow = new \DateTime('tomorrow');
+
             $websiteContracts = $this->websiteContractRepository->createQueryBuilder('c')
-                ->where('c.nextPaymentAt = :today')
-                ->setParameter('today', new \DateTime('today'))
+                ->where('c.nextPaymentAt >= :today')
+                ->andWhere('c.nextPaymentAt < :tomorrow')
+                ->setParameter('today', $today)
+                ->setParameter('tomorrow', $tomorrow)
                 ->getQuery()
                 ->getResult();
 

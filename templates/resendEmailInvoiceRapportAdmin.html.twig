@@ -419,26 +419,25 @@
                 <i class="fas fa-file-invoice-dollar"></i> Contrats en attente de règlement
             </div>
 
-            {% if contracts is empty %}
+            {% if transactions is empty %}
                 <div class="empty-message">
                     Aucun contrat n'est actuellement concerné par une relance.
                 </div>
             {% else %}
                 <ul class="contract-list">
-                    {% for contract in contracts %}
+                    {% for transaction in transactions %}
                         <li class="contract-item">
                             <div class="contract-details">
                                 <div class="contract-icon">
                                     <i class="fas fa-file-contract"></i>
                                 </div>
                                 <div class="contract-info">
-                                    <span class="contract-prestation">{{ contract.prestation }}</span>
-                                    <span class="contract-id">Réf: {{ contract.uuid|slice(0, 8) }}...</span>
+                                    <span class="contract-id">Réf: {{ transaction.uuid|slice(0, 8) }}...</span>
                                 </div>
                             </div>
                             <div class="contract-amount">
-                                <div class="amount-value">{{ contract.monthlyCost|round(2) }} €</div>
-                                <div class="amount-details">TVA {{ contract.tva }}% incluse</div>
+                                <div class="amount-value">{{ transaction.amount|round(2) }} €</div>
+                                <div class="amount-details">TVA {{ transaction.tva }}% incluse</div>
                             </div>
                         </li>
                     {% endfor %}
@@ -448,12 +447,12 @@
 
         <div class="summary-card">
             <div class="summary-info">
-                <span class="summary-label">Nombre de contrats</span>
-                <span class="summary-value">{{ contracts|length }}</span>
+                <span class="summary-label">Nombre de factures</span>
+                <span class="summary-value">{{ transactions|length }}</span>
             </div>
             <div class="summary-info">
                 <span class="summary-label">Montant total à recouvrer</span>
-                <span class="summary-value">{{ contracts|reduce((carry, contract) => carry + contract.monthlyCost, 0)|round(2) }} €</span>
+                <span class="summary-value">{{ transactions|reduce((carry, contract) => carry + contract.amount, 0)|round(2) }} €</span>
             </div>
         </div>
 

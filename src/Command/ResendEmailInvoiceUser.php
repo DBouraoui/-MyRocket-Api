@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Event\ResendInvoiceEvent;
 use App\Event\ResendInvoiceRapportAdminEvent;
+use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -21,9 +22,9 @@ class ResendEmailInvoiceUser extends Command
 {
     public function __construct(
         private readonly LoggerInterface           $logger,
-        private readonly WebsiteContractRepository $websiteContractRepository,
         private readonly EventDispatcherInterface  $eventDispatcher,
-        private readonly UserRepository $userRepository
+        private readonly UserRepository            $userRepository,
+        private readonly TransactionRepository $transactionRepository
     ) {
         parent::__construct();
     }
@@ -40,24 +41,25 @@ class ResendEmailInvoiceUser extends Command
             $output->writeln('Vérification des factures impayées...');
 
             $sevenDaysAgo = new \DateTime('today');
-            $sevenDaysAgo->modify('-7 days');
+            $sevenDaysAgo->modify('-6 days');
 
-            $websiteContracts = $this->websiteContractRepository->createQueryBuilder('c')
-                ->where('c.nextPaymentAt < :sevenDaysAgo')
+            $transactions = $this->transactionRepository->createQueryBuilder('t')
+                ->where('t.createdAt <= :sevenDaysAgo')
+                ->andWhere('t.isPaid = :isPaid')  // Utilisez andWhere() au lieu d'un second where()
                 ->setParameter('sevenDaysAgo', $sevenDaysAgo)
+                ->setParameter('isPaid', false)   // Utilisez false au lieu de 0, ou selon le type dans votre entité
                 ->getQuery()
                 ->getResult();
+            $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($transactions)));
 
-            $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($websiteContracts)));
-
-            if (!empty($websiteContracts)) {
+            if (!empty($transactions)) {
                 $data = [];
 
-                foreach ($websiteContracts as $contract) {
-                    $user = $contract->getUser();
-                    $data[] = $contract;
+                foreach ($transactions as $transaction) {
+                    $user = $transaction->getUser();
+                    $data[] = $transaction;
 
-                    $event = new ResendInvoiceEvent($user, $contract);
+                    $event = new ResendInvoiceEvent($user, $transaction);
                     $this->eventDispatcher->dispatch($event, ResendInvoiceEvent::NAME);
 
                     $this->logger->info('Relance de facture impayer à ' . $user->getEmail());

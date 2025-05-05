@@ -45,12 +45,12 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
     {
         try {
             $user = $event->getUser();
-            $websiteContract = $event->getWebsiteContract();
+            $transaction = $event->getTransactions();
 
             $context = [
                 'template'=>ResendInvoiceEvent::TEMPLATE_NAME,
                 'user'=>$user,
-                'contract'=>$websiteContract,
+                'transaction'=>$transaction,
             ];
 
             $this->emailService->generate($user, 'Rappel une facture est disponible sur votre espace client',
@@ -73,7 +73,7 @@ class EmailNotifierEventListener implements EventSubscriberInterface {
             $context = [
                 'template'=>ResendInvoiceRapportAdminEvent::TEMPLATE_NAME,
                 'user'=>$user,
-                'contracts'=>$websiteContract,
+                'transactions'=>$websiteContract,
             ];
             $this->emailService->generate($user, 'Rapport d\'envoie des facture impayer', $context);
 

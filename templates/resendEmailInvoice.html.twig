@@ -411,28 +411,24 @@
             </div>
 
             <div class="info-row">
-                <div class="info-label">Prestation</div>
-                <div class="info-value">{{ contract.prestation }}</div>
-            </div>
-            <div class="info-row">
                 <div class="info-label">Référence</div>
-                <div class="info-value contract-badge">{{ contract.uuid|slice(0, 8) }}...</div>
+                <div class="info-value contract-badge">{{ transaction.uuid|slice(0, 8) }}...</div>
             </div>
             <div class="info-row">
                 <div class="info-label">Dernière mise à jour</div>
-                <div class="info-value">{{ contract.updatedAt|date('d/m/Y') }}</div>
+                <div class="info-value">{{ transaction.createdAt|date('d/m/Y') }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">Montant mensuel HT</div>
-                <div class="info-value">{{ (contract.monthlyCost / (1 + contract.tva / 100))|round(2) }} €</div>
+                <div class="info-value">{{ (transaction.amount / (1 + transaction.tva / 100))|round(2) }} €</div>
             </div>
             <div class="info-row">
-                <div class="info-label">TVA ({{ contract.tva }}%)</div>
-                <div class="info-value">{{ (contract.monthlyCost - (contract.monthlyCost / (1 + contract.tva / 100)))|round(2) }} €</div>
+                <div class="info-label">TVA ({{ transaction.tva }}%)</div>
+                <div class="info-value">{{ (transaction.amount - (transaction.amount / (1 + transaction.tva / 100)))|round(2) }} €</div>
             </div>
             <div class="total-row">
                 <div class="total-label">Total TTC à régler</div>
-                <div class="total-value">{{ contract.monthlyCost|round(2) }} €</div>
+                <div class="total-value">{{ transaction.amount|round(2) }} €</div>
             </div>
         </div>
 
