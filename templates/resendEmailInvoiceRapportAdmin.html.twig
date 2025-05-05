@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de relance de factures</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0f52ba;
+            --secondary-color: #4a89dc;
+            --accent-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-bg: #f8fafc;
+            --dark-bg: #1a365d;
+            --text-color: #334155;
+            --light-text: #f1f5f9;
+            --border-radius: 10px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'SF Pro Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 25px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 750px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(120deg, var(--dark-bg), var(--primary-color));
+            color: var(--light-text);
+            padding: 35px 30px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.1;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.6;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.05rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+
+        .report-icon {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-left: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-text {
+            padding: 25px 30px 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--accent-color), #c0392b);
+            border-radius: 3px 0 0 3px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .card-title i {
+            color: var(--secondary-color);
+            font-size: 1.1em;
+        }
+
+        .contract-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .contract-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #f8fafc;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .contract-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .contract-icon {
+            width: 45px;
+            height: 45px;
+            background-color: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .contract-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contract-prestation {
+            font-weight: 600;
+            color: var(--dark-bg);
+            margin-bottom: 4px;
+        }
+
+        .contract-id {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .contract-amount {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .amount-value {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+
+        .amount-details {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .summary-card {
+            background-color: #fef2f2;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #fee2e2;
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #991b1b;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .action-button {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            margin: 25px 0 5px;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(74, 137, 220, 0.2);
+        }
+
+        .action-button:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 137, 220, 0.3);
+        }
+
+        .action-button i {
+            margin-right: 8px;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .footer {
+            padding: 30px;
+            background: linear-gradient(to right, var(--light-bg), #f1f5f9);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+            color: #64748b;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .company-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .company-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .copyright {
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .container {
+                margin: 0;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+                padding: 25px 20px;
+            }
+
+            .report-icon {
+                margin-left: 0;
+                align-self: center;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .content, .welcome-text {
+                padding: 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .contract-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .contract-amount {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .summary-card {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .summary-info {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-content">
+            <h1>Rapport de relance de factures</h1>
+            <p>Récapitulatif des contrats concernés par des relances de paiement</p>
+        </div>
+        <div class="report-icon">
+            <i class="fas fa-bell"></i>
+        </div>
+    </div>
+
+    <div class="welcome-text">
+        Rapport du {{ "now"|date('d/m/Y') }}
+    </div>
+
+    <div class="content">
+        <p><strong>Voici la liste des contrats concernés par l'envoi de relances de factures.</strong></p>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-file-invoice-dollar"></i> Contrats en attente de règlement
+            </div>
+
+            {% if contracts is empty %}
+                <div class="empty-message">
+                    Aucun contrat n'est actuellement concerné par une relance.
+                </div>
+            {% else %}
+                <ul class="contract-list">
+                    {% for contract in contracts %}
+                        <li class="contract-item">
+                            <div class="contract-details">
+                                <div class="contract-icon">
+                                    <i class="fas fa-file-contract"></i>
+                                </div>
+                                <div class="contract-info">
+                                    <span class="contract-prestation">{{ contract.prestation }}</span>
+                                    <span class="contract-id">Réf: {{ contract.uuid|slice(0, 8) }}...</span>
+                                </div>
+                            </div>
+                            <div class="contract-amount">
+                                <div class="amount-value">{{ contract.monthlyCost|round(2) }} €</div>
+                                <div class="amount-details">TVA {{ contract.tva }}% incluse</div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-info">
+                <span class="summary-label">Nombre de contrats</span>
+                <span class="summary-value">{{ contracts|length }}</span>
+            </div>
+            <div class="summary-info">
+                <span class="summary-label">Montant total à recouvrer</span>
+                <span class="summary-value">{{ contracts|reduce((carry, contract) => carry + contract.monthlyCost, 0)|round(2) }} €</span>
+            </div>
+        </div>
+
+        <a href="#" class="action-button">
+            <i class="fas fa-file-export"></i> Exporter le rapport
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>Ce rapport est généré automatiquement.<br>MyRocket - Système de facturation</p>
+
+        <div class="company-info">
+            <div class="company-logo">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <span>MyRocket</span>
+        </div>
+
+        <div class="copyright">
+            © 2025 MyRocket - Tous droits réservés
+        </div>
+    </div>
+</div>
+</body>
+</html>
