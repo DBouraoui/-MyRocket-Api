@@ -2,11 +2,13 @@
 
 namespace App\Command;
 
+use App\Entity\Notification;
 use App\Event\ResendInvoiceEvent;
 use App\Event\ResendInvoiceRapportAdminEvent;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
+use App\service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -63,6 +65,15 @@ class ResendEmailInvoiceUser extends Command
 
                     $transaction->setIsReminderSent(true);
                     $transaction->setReminderSentAt(new \DateTimeImmutable('now'));
+                    $this->entityManager->flush();
+
+                    $notification = new Notification();
+                    $notification->setUser($user);
+                    $notification->setTitle(NotificationService::TRANSACTION_DELAY_TITLE);
+                    $notification->setDescription(NotificationService::TRANSACTION_DELAY_DESCRIPTION);
+                    $notification->setIsPriotity(true);
+
+                    $this->entityManager->persist($notification);
                     $this->entityManager->flush();
 
                     $event = new ResendInvoiceEvent($user, $transaction);

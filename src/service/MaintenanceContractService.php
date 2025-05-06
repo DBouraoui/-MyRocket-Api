@@ -3,6 +3,7 @@
 namespace App\service;
 
 use App\Entity\MaintenanceContract;
+use App\Entity\Notification;
 use App\Entity\User;
 use App\Entity\Website;
 use App\traits\ExeptionTrait;
@@ -38,6 +39,17 @@ class MaintenanceContractService
 
             $this->entityManager->persist($maintenanceContract);
             $this->entityManager->flush();
+
+
+            $notification = new Notification();
+            $notification->setUser($user);
+            $notification->setIsPriotity(false);
+            $notification->setTitle(NotificationService::WEBSITE_MAINTENANCE_CONTRACT_CREATED_TITLE);
+            $notification->setDescription(NotificationService::WEBSITE_MAINTENANCE_CONTRACT_CREATED_DESCRIPTION);
+
+            $this->entityManager->persist($notification);
+            $this->entityManager->flush();
+
 
             return $maintenanceContract;
         } catch(\Exception $e) {

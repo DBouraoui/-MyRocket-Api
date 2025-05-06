@@ -2,12 +2,9 @@
 
 namespace App\Controller;
 
-use App\DTO\user\RegisterDTO;
-use App\DTO\user\UserDeleteDTO;
 use App\DTO\user\UserPutDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\service\EmailService;
 use App\service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
