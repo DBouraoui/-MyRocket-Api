@@ -47,9 +47,6 @@ class NotificationController extends AbstractController
     #[Route(path: '/{uuid}', name: '_patch', methods: ['PATCH'])]
     public function patch(#[CurrentUser] User $user, string $uuid): JsonResponse {
         try {
-            if (!$user instanceof User) {
-                return new JsonResponse(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
-            }
 
             if (empty($uuid)) {
                 return new JsonResponse(['message' => 'Uuid cannot be empty'], Response::HTTP_NOT_FOUND);
@@ -61,7 +58,29 @@ class NotificationController extends AbstractController
                 return new JsonResponse(['message' => 'Notification not found'], Response::HTTP_NOT_FOUND);
             }
 
+            if ($notification->getUser() !== $user) {
+                return new JsonResponse(['message' => 'Notification not allowed'], Response::HTTP_FORBIDDEN);
+            }
+
             $this->notificationService->valideNotification($notification);
+
+            return $this->json(['success'=>true],Response::HTTP_OK);
+        } catch (\Throwable $th) {
+            $this->logger->error($th->getMessage());
+            return $this->json(['error' => $th->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route(path: '/all', name: '_patch_all', methods: ['DELETE'])]
+    public function patchAllNotification(#[CurrentUser] User $user): JsonResponse {
+        try {
+            $notifications = $user->getNotifications();
+
+            if (empty($notifications)) {
+                return new JsonResponse(['message' => 'Notification not found'], Response::HTTP_NOT_FOUND);
+            }
+
+            $this->notificationService->valideAllNotifications($notifications);
 
             return $this->json(['success'=>true],Response::HTTP_OK);
         } catch (\Throwable $th) {

@@ -8,7 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
-readonly class NotificationService {
+ class NotificationService {
 
     public const WEBSITE_CONTRACT_CREATED_TITLE = "Nouveau contrat créé !";
     public const WEBSITE_CONTRACT_CREATED_DESCRIPTION = "Un contrat vient d'être créé. Vous pouvez le consulter dans votre espace 'site web' dès maintenant.";
@@ -47,15 +47,27 @@ readonly class NotificationService {
             Throw new \Exception($e->getMessage(),Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
+
+    public function valideAllNotifications(Collection $notifications) {
+        try {
+            foreach ($notifications as $notification) {
+                $this->valideNotification($notification);
+            }
+
+        } catch(\Exception $e) {
+            $this->logger->error($e->getMessage());
+            Throw new \Exception($e->getMessage(),Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
     public function normalize(Notification $notification): array
     {
         return [
             'uuid'=>$notification->getUuid(),
             'title'=>$notification->getTitle(),
             'description'=>$notification->getDescription(),
-            'createdAt'=>$notification->getCreatedAt(),
+            'createdAt'=>$notification->getCreatedAt()->format('d-m-Y H:i:s'),
             'isPriority'=>$notification->isPriotity(),
-            'readingAt'=>$notification->getReadingAt(),
+            'readingAt'=>$notification->getReadingAt()?->format('d-m-Y H:i:s'),
         ];
     }
 
