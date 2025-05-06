@@ -21,17 +21,19 @@ class Schedule implements ScheduleProviderInterface
     {
         return (new SymfonySchedule())
             ->add(
-                RecurringMessage::cron('*/1 * * * *',
+                RecurringMessage::cron('#daily',
                     new RunCommandMessage('app:check-invoice-user')),
             )
             ->add(
-                RecurringMessage::cron('*/1 * * * *',
+                RecurringMessage::cron('#daily',
                     new RunCommandMessage('app:resend-invoice-user'))
             )
-            ->stateful($this->cache) // ensure missed tasks are executed
-            ->processOnlyLastMissedRun(true) // ensure only last missed task is run
-            // add your own tasks here
-            // see https://symfony.com/doc/current/scheduler.html#attaching-recurring-messages-to-a-schedule
+            ->add(
+                RecurringMessage::cron('#daily',
+                    new RunCommandMessage('app:delete-notification'))
+            )
+            ->stateful($this->cache)
+            ->processOnlyLastMissedRun(true)
         ;
     }
 }

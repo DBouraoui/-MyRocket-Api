@@ -3,8 +3,8 @@ flysystem:
         contact.storage:
             adapter: 'local'
             options:
-                directory: '%kernel.project_dir%/var/pictures/contact'
+                directory: '%kernel.project_dir%/pictures/pictures/contact'
         project.storage:
             adapter: 'local'
             options:
-                directory: '%kernel.project_dir%/var/pictures/project'
+                directory: '%kernel.project_dir%/pictures/pictures/project'
