@@ -154,6 +154,8 @@ final class UserController extends AbstractController
         }  catch (\Exception $e) {
             $this->logger->error("Erreur serveur interne", ['error' => $e->getMessage()]);
             return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (InvalidArgumentException $e) {
+            $this->logger->error("Erreur serveur interne", ['error' => $e->getMessage()]);
         }
     }
 }

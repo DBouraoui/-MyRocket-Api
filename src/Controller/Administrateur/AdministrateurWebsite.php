@@ -23,7 +23,6 @@ use Symfony\Contracts\Cache\CacheInterface;
 #[IsGranted("ROLE_ADMIN")]
 class AdministrateurWebsite extends AbstractController
 {
-    public const POST_REQUIRED_FIELDS =['title', 'url', 'description', 'status', 'type', 'uuidUser'];
     public const GET_ALL_WEBSITES = 'getAllWebsites';
     public const GET_ONE_WEBSITE = 'getOneWebsite';
 
@@ -61,8 +60,6 @@ class AdministrateurWebsite extends AbstractController
             if (empty($data)) {
                 Throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
             }
-
-            $this->checkRequiredFields(self::POST_REQUIRED_FIELDS, $data);
 
             $user = $this->userRepository->findOneBy(['uuid' => $data['uuidUser']]);
 
