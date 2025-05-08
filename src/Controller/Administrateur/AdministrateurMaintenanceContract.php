@@ -19,7 +19,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class AdministrateurMaintenanceContract extends AbstractController
 {
-    public const POST_REQUIRED_FIELDS = ['monthlyCost', 'uuidWebsite', 'firstPaymentAt','reccurence', 'startAt', 'endAt'];
     public const PUT_ALLOW_FIELDS = ['monthlyCost', 'reccurence', 'endAt'];
     public function __construct(private readonly WebsiteRepository $websiteRepository, private readonly MaintenanceContractService $maintenanceContractService, private readonly LoggerInterface $logger, private readonly MaintenanceContractRepository $maintenanceContractRepository, private readonly EntityManagerInterface $entityManager, private readonly UserRepository $userRepository)
     {
@@ -34,8 +33,6 @@ class AdministrateurMaintenanceContract extends AbstractController
             if (empty($data)) {
                 Throw new \Exception(MaintenanceContractService::EMPTY_DATA, Response::HTTP_BAD_REQUEST);
             }
-
-            $this->checkRequiredFields(self::POST_REQUIRED_FIELDS, $data);
 
 
             $website = $this->websiteRepository->findOneBy(['uuid'=>$data['uuidWebsite']]);

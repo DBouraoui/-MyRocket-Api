@@ -5,7 +5,6 @@ namespace App\Controller\Administrateur;
 use App\Event\WebsiteCreateEvent;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
-use App\service\EmailService;
 use App\service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;

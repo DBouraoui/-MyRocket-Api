@@ -22,7 +22,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-#[Route( '/api/administrateur/user', name: 'user_register', methods: ['POST'])]
+#[Route( '/api/administrateur/user', name: 'user_register')]
 #[IsGranted('ROLE_ADMIN')]
 class AdministrateurUser extends AbstractController
 {

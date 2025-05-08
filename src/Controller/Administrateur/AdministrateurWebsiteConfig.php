@@ -17,8 +17,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted("ROLE_ADMIN")]
 final class AdministrateurWebsiteConfig extends AbstractController
 {
-    public const POST_MUTUALISED_REQUIRED_FILDS =['uuidWebsite', 'username', 'password', 'address', 'port'];
-    public const POST_VPS_REQUIRED_FILEDS = ['uuidWebsite', 'username', 'password', 'address', 'port', 'publicKey'];
     public const PUT_ALLOW_FIELDS = ['username', 'password', 'address', 'port'];
 
     public function __construct
@@ -44,8 +42,6 @@ final class AdministrateurWebsiteConfig extends AbstractController
             if (empty($data)) {
                 Throw new \Exception(WebsiteService::EMPTY_DATA,Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-
-            $this->checkRequiredFields(self::POST_MUTUALISED_REQUIRED_FILDS,$data);
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuidWebsite']]);
 
@@ -168,8 +164,6 @@ final class AdministrateurWebsiteConfig extends AbstractController
             if (empty($data)) {
                 Throw new \Exception(WebsiteService::EMPTY_DATA,Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-
-            $this->checkRequiredFields(self::POST_VPS_REQUIRED_FILEDS, $data);
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuidWebsite']]);
 

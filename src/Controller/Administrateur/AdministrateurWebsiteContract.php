@@ -21,8 +21,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class AdministrateurWebsiteContract extends AbstractController
 {
-    public const POST_REQUIRE_FIELDS = ['uuidWebsite', 'monthlyCost', 'reccurence', 'prestation', 'firstPaymentAt', 'lastPaymentAt', 'nextPaymentAt'];
-
     public function __construct
     (
         private WebsiteService             $websiteService,
@@ -49,8 +47,6 @@ class AdministrateurWebsiteContract extends AbstractController
             if (empty($data)) {
                 Throw new \Exception(WebsiteService::EMPTY_DATA);
             }
-
-            $this->checkRequiredFields(self::POST_REQUIRE_FIELDS, $data);
 
             if (empty($data['uuidWebsite'])) {
                 Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_BAD_REQUEST);
