@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App;
 
 use Symfony\Component\Console\Messenger\RunCommandMessage;
@@ -21,16 +30,22 @@ class Schedule implements ScheduleProviderInterface
     {
         return (new SymfonySchedule())
             ->add(
-                RecurringMessage::cron('#daily',
-                    new RunCommandMessage('app:check-invoice-user')),
+                RecurringMessage::cron(
+                    '#daily',
+                    new RunCommandMessage('app:check-invoice-user')
+                ),
             )
             ->add(
-                RecurringMessage::cron('#daily',
-                    new RunCommandMessage('app:resend-invoice-user'))
+                RecurringMessage::cron(
+                    '#daily',
+                    new RunCommandMessage('app:resend-invoice-user')
+                )
             )
             ->add(
-                RecurringMessage::cron('#daily',
-                    new RunCommandMessage('app:delete-notification'))
+                RecurringMessage::cron(
+                    '#daily',
+                    new RunCommandMessage('app:delete-notification')
+                )
             )
             ->stateful($this->cache)
             ->processOnlyLastMissedRun(true)

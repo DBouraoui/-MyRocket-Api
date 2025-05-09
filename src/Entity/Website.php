@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Entity;
 
 use App\Repository\WebsiteRepository;
@@ -56,13 +65,16 @@ class Website
     private ?MaintenanceContract $maintenanceContract = null;
 
     #[ORM\PrePersist]
-    public function init() {
+    public function init()
+    {
         $this->createdAt = new \DateTimeImmutable('now');
         $this->updatedAt = new \DateTimeImmutable('now');
         $this->uuid = Uuid::v4();
     }
+
     #[ORM\PreUpdate]
-    public function update() {
+    public function update()
+    {
         $this->updatedAt = new \DateTimeImmutable('now');
     }
 
@@ -204,12 +216,12 @@ class Website
     public function setWebsiteVps(?WebsiteVps $websiteVps): static
     {
         // unset the owning side of the relation if necessary
-        if ($websiteVps === null && $this->websiteVps !== null) {
+        if (null === $websiteVps && null !== $this->websiteVps) {
             $this->websiteVps->setWebsite(null);
         }
 
         // set the owning side of the relation if necessary
-        if ($websiteVps !== null && $websiteVps->getWebsite() !== $this) {
+        if (null !== $websiteVps && $websiteVps->getWebsite() !== $this) {
             $websiteVps->setWebsite($this);
         }
 
@@ -226,12 +238,12 @@ class Website
     public function setWebsiteContract(?WebsiteContract $WebsiteContract): static
     {
         // unset the owning side of the relation if necessary
-        if ($WebsiteContract === null && $this->WebsiteContract !== null) {
+        if (null === $WebsiteContract && null !== $this->WebsiteContract) {
             $this->WebsiteContract->setWebsite(null);
         }
 
         // set the owning side of the relation if necessary
-        if ($WebsiteContract !== null && $WebsiteContract->getWebsite() !== $this) {
+        if (null !== $WebsiteContract && $WebsiteContract->getWebsite() !== $this) {
             $WebsiteContract->setWebsite($this);
         }
 
@@ -248,12 +260,12 @@ class Website
     public function setMaintenanceContract(?MaintenanceContract $maintenanceContract): static
     {
         // unset the owning side of the relation if necessary
-        if ($maintenanceContract === null && $this->maintenanceContract !== null) {
+        if (null === $maintenanceContract && null !== $this->maintenanceContract) {
             $this->maintenanceContract->setWebsite(null);
         }
 
         // set the owning side of the relation if necessary
-        if ($maintenanceContract !== null && $maintenanceContract->getWebsite() !== $this) {
+        if (null !== $maintenanceContract && $maintenanceContract->getWebsite() !== $this) {
             $maintenanceContract->setWebsite($this);
         }
 

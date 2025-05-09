@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Command;
 
 use App\Entity\User;
@@ -37,7 +46,8 @@ class CreateUserCommande extends Command
             ->addArgument('country', InputArgument::REQUIRED, 'Country (e.g., France)')
             ->addArgument('address', InputArgument::REQUIRED, 'Address (e.g., 35 rue Paul Verlaine)')
             ->addArgument('phone', InputArgument::REQUIRED, 'Phone number (e.g., 0609216908)')
-            ->addArgument('password', InputArgument::REQUIRED, 'Password for the user');
+            ->addArgument('password', InputArgument::REQUIRED, 'Password for the user')
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

@@ -1,6 +1,15 @@
 <?php
 
-namespace App\traits;
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace App\Traits;
 
 use App\Entity\ProjectsToDisplay;
 use Doctrine\ORM\Mapping\Id;
@@ -14,11 +23,11 @@ trait ProjectToDisplay
     public ?int $id;
     #[Uuid]
     public ?string $uuid;
-    #[Length(min:1,max: 255)]
+    #[Length(min: 1, max: 255)]
     public ?string $title;
-    #[Length(min:1,max: 255)]
+    #[Length(min: 1, max: 255)]
     public ?string $description;
-    #[Length(min:1,max: 255)]
+    #[Length(min: 1, max: 255)]
     public ?string $slug;
     #[DateTime]
     public ?\DateTimeImmutable $createdAt;
@@ -53,7 +62,7 @@ trait ProjectToDisplay
 
     public static function fromArray(array $data): self
     {
-        if(empty($data)) {
+        if (empty($data)) {
             throw new \Exception('The array is empty');
         }
 
@@ -64,7 +73,7 @@ trait ProjectToDisplay
                 $self->{$key} = $value;
             }
         }
+
         return $self;
     }
-
 }

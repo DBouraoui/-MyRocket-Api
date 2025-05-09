@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Command;
 
 use App\Entity\Notification;
@@ -7,8 +16,7 @@ use App\Event\ResendInvoiceEvent;
 use App\Event\ResendInvoiceRapportAdminEvent;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
-use App\Repository\WebsiteContractRepository;
-use App\service\NotificationService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -24,10 +32,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ResendEmailInvoiceUser extends Command
 {
     public function __construct(
-        private readonly LoggerInterface          $logger,
+        private readonly LoggerInterface $logger,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly UserRepository           $userRepository,
-        private readonly TransactionRepository    $transactionRepository, private readonly EntityManagerInterface $entityManager
+        private readonly UserRepository $userRepository,
+        private readonly TransactionRepository $transactionRepository,
+        private readonly EntityManagerInterface $entityManager
     ) {
         parent::__construct();
     }
@@ -52,7 +61,8 @@ class ResendEmailInvoiceUser extends Command
                 ->setParameter('sevenDaysAgo', $sevenDaysAgo)
                 ->setParameter('isPaid', false)
                 ->getQuery()
-                ->getResult();
+                ->getResult()
+            ;
 
             $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($transactions)));
 
@@ -91,11 +101,11 @@ class ResendEmailInvoiceUser extends Command
                 $this->logger->warning('Aucune relance client à été éffectuer');
             }
 
-
             return Command::SUCCESS;
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             $output->writeln('<error>' . $e->getMessage() . '</error>');
+
             return Command::FAILURE;
         }
     }

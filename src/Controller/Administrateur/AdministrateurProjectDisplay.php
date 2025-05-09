@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller\Administrateur;
 
 use App\DTO\ProjectToDisplay\ProjectCreateDTO;
@@ -18,19 +27,18 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route(path:'/api/administrateur/projects-display',name: 'api_administrateur_projects-display')]
+#[Route(path: '/api/administrateur/projects-display', name: 'api_administrateur_projects-display')]
 #[IsGranted('ROLE_ADMIN')]
 class AdministrateurProjectDisplay extends AbstractController
 {
-    public function __construct
-    (
-        private readonly ValidatorInterface     $validator,
-        private readonly SluggerInterface       $slugger,
+    public function __construct(
+        private readonly ValidatorInterface $validator,
+        private readonly SluggerInterface $slugger,
         private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface        $logger,
-        private readonly FilesystemOperator     $projectStorage, private readonly ProjectsToDisplayRepository $projectsToDisplayRepository
-    )
-    {
+        private readonly LoggerInterface $logger,
+        private readonly FilesystemOperator $projectStorage,
+        private readonly ProjectsToDisplayRepository $projectsToDisplayRepository
+    ) {
     }
 
     #[Route(name: '_post', methods: ['POST'])]
@@ -48,7 +56,7 @@ class AdministrateurProjectDisplay extends AbstractController
                 'title' => $title,
                 'description' => $description,
                 'link' => $link,
-                'tags' => $tags
+                'tags' => $tags,
             ];
 
             // Validation du DTO
@@ -60,6 +68,7 @@ class AdministrateurProjectDisplay extends AbstractController
                 foreach ($violations as $violation) {
                     $errors[$violation->getPropertyPath()] = $violation->getMessage();
                 }
+
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
             }
 
@@ -109,6 +118,7 @@ class AdministrateurProjectDisplay extends AbstractController
             );
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -128,13 +138,14 @@ class AdministrateurProjectDisplay extends AbstractController
                 foreach ($violations as $violation) {
                     $errors[$violation->getPropertyPath()] = $violation->getMessage();
                 }
+
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
             }
 
             $projects = $this->projectsToDisplayRepository->findOneBy(['uuid' => $uprojectUpdateDTO->uuid]);
 
             if (empty($projects)) {
-                return $this->json(['success'=>false],Response::HTTP_EXPECTATION_FAILED);
+                return $this->json(['success' => false], Response::HTTP_EXPECTATION_FAILED);
             }
             unset($data['uuid']);
 
@@ -149,15 +160,16 @@ class AdministrateurProjectDisplay extends AbstractController
             foreach ($data as $field => $value) {
                 $setter = 'set' . ucfirst($field);
                 if (method_exists($projects, $setter)) {
-                    $projects->$setter($value);
+                    $projects->{$setter}($value);
                 }
             }
 
             $this->entityManager->flush();
 
-            return $this->json(['success'=>true], Response::HTTP_OK);
-        } catch(\Exception $e) {
+            return $this->json(['success' => true], Response::HTTP_OK);
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+
             return $this->json(['error' => $e->getMessage()], 400);
         }
     }
@@ -185,6 +197,7 @@ class AdministrateurProjectDisplay extends AbstractController
             );
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -199,6 +212,7 @@ class AdministrateurProjectDisplay extends AbstractController
             // Vérifier la taille du fichier
             if ($uploadedFile->getSize() > 5000000) {
                 $this->logger->warning('Fichier trop volumineux: ' . $uploadedFile->getClientOriginalName());
+
                 return null;
             }
 
@@ -216,6 +230,7 @@ class AdministrateurProjectDisplay extends AbstractController
             return $fileName;
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors du traitement du fichier: ' . $e->getMessage());
+
             return null;
         }
     }

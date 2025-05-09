@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller\Administrateur;
 
 use App\Entity\Contact;
@@ -22,11 +31,12 @@ use Symfony\Contracts\Cache\ItemInterface;
 class AdministrateurContact extends AbstractController
 {
     public const GET_ALLCONTACTS = 'getAllContacts';
-    public function __construct(private readonly ContactRepository $contactRepository, private readonly FilesystemOperator $contactStorage, private readonly LoggerInterface $logger, private readonly EntityManagerInterface $entityManager, private readonly CacheInterface $cache,)
+
+    public function __construct(private readonly ContactRepository $contactRepository, private readonly FilesystemOperator $contactStorage, private readonly LoggerInterface $logger, private readonly EntityManagerInterface $entityManager, private readonly CacheInterface $cache)
     {
     }
 
-    #[Route(name:'_delete',methods: ['DELETE'])]
+    #[Route(name: '_delete', methods: ['DELETE'])]
     public function delete(Request $request): JsonResponse
     {
         try {
@@ -76,10 +86,11 @@ class AdministrateurContact extends AbstractController
                 'success' => true,
                 'message' => 'Contact supprimé',
                 'deletedFiles' => $deletedFiles,
-                'failedFiles' => $failedFiles
+                'failedFiles' => $failedFiles,
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de la suppression du contact: ' . $e->getMessage());
+
             return $this->json(
                 ['success' => false, 'message' => 'Erreur serveur: ' . $e->getMessage()],
                 Response::HTTP_INTERNAL_SERVER_ERROR
@@ -87,7 +98,7 @@ class AdministrateurContact extends AbstractController
         }
     }
 
-    #[Route(name:'_get',methods: ['GET'])]
+    #[Route(name: '_get', methods: ['GET'])]
     public function get(Request $request): JsonResponse
     {
         try {
@@ -96,9 +107,9 @@ class AdministrateurContact extends AbstractController
             $withImageUrls = $request->query->getBoolean('withImageUrls', true);
 
             if (!empty($oneContactByUuid) && empty($all)) {
-
-                $contact = $this->cache->get(self::GET_ALLCONTACTS,function (ItemInterface $item) use($oneContactByUuid) {
+                $contact = $this->cache->get(self::GET_ALLCONTACTS, function (ItemInterface $item) use ($oneContactByUuid) {
                     $item->expiresAfter(3600);
+
                     return $this->contactRepository->findOneBy(['uuid' => $oneContactByUuid]);
                 });
 
@@ -111,15 +122,16 @@ class AdministrateurContact extends AbstractController
 
                 return $this->json([
                     'success' => true,
-                    'data' => $this->normalizeContact($contact, $withImageUrls)
+                    'data' => $this->normalizeContact($contact, $withImageUrls),
                 ], Response::HTTP_OK);
             }
 
             if (!empty($all) && empty($oneContactByUuid)) {
                 $contacts = $this->contactRepository->findAll();
+
                 return $this->json([
                     'success' => true,
-                    'data' => $this->normalizeContacts($contacts, $withImageUrls)
+                    'data' => $this->normalizeContacts($contacts, $withImageUrls),
                 ], Response::HTTP_OK);
             }
 
@@ -129,12 +141,13 @@ class AdministrateurContact extends AbstractController
             );
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+
             return $this->json(['error' => 'Erreur serveur'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * Normalise un contact et inclut les URLs des images si demandé
+     * Normalise un contact et inclut les URLs des images si demandé.
      */
     private function normalizeContact(Contact $contact, bool $withImageUrls = false): array
     {
@@ -161,7 +174,7 @@ class AdministrateurContact extends AbstractController
                 if ($imageUrl) {
                     $pictureUrls[] = [
                         'filename' => $filename,
-                        'url' => $imageUrl
+                        'url' => $imageUrl,
                     ];
                 }
             }
@@ -175,7 +188,7 @@ class AdministrateurContact extends AbstractController
     }
 
     /**
-     * Normalise un tableau de contacts
+     * Normalise un tableau de contacts.
      */
     private function normalizeContacts(array $contacts, bool $withImageUrls = false): array
     {
@@ -183,11 +196,12 @@ class AdministrateurContact extends AbstractController
         foreach ($contacts as $contact) {
             $contactArray[] = $this->normalizeContact($contact, $withImageUrls);
         }
+
         return $contactArray;
     }
 
     /**
-     * Route pour servir les images des contacts
+     * Route pour servir les images des contacts.
      */
     #[Route('/api/contact/image/{filename}', name: '_image_get', methods: ['GET'])]
     #[IsGranted('PUBLIC_ACCESS')]
@@ -203,7 +217,7 @@ class AdministrateurContact extends AbstractController
             $fileContent = $this->contactStorage->read($filename);
 
             // Déterminer le type MIME
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $finfo = new \finfo(\FILEINFO_MIME_TYPE);
             $mimeType = $finfo->buffer($fileContent) ?: 'application/octet-stream';
 
             // Créer la réponse avec les en-têtes appropriés
@@ -219,12 +233,13 @@ class AdministrateurContact extends AbstractController
             return $response;
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de la récupération de l\'image de contact: ' . $e->getMessage());
+
             return new Response('Erreur lors de la récupération de l\'image', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * Génère une URL pour l'image d'un contact
+     * Génère une URL pour l'image d'un contact.
      */
     private function getContactImageUrl(string $filename): ?string
     {
@@ -236,6 +251,7 @@ class AdministrateurContact extends AbstractController
             // Vérifier si le fichier existe
             if (!$this->contactStorage->fileExists($filename)) {
                 $this->logger->warning('Le fichier image de contact n\'existe pas: ' . $filename);
+
                 return null;
             }
 
@@ -247,6 +263,7 @@ class AdministrateurContact extends AbstractController
             );
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de la génération de l\'URL de l\'image: ' . $e->getMessage());
+
             return null;
         }
     }

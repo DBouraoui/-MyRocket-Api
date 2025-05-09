@@ -1,17 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Command;
 
-use App\Entity\Notification;
-use App\Entity\Transaction;
-use App\Event\TransactionCreateEvent;
-use App\Event\TransactionRapportAdmin;
 use App\Repository\NotificationRepository;
-use App\Repository\UserRepository;
-use App\Repository\WebsiteContractRepository;
-use App\service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -25,8 +26,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 class NotificationDelete extends Command
 {
     public function __construct(
-        private readonly LoggerInterface        $logger,
-        private readonly NotificationRepository $notificationRepository, private readonly EntityManagerInterface $entityManager
+        private readonly LoggerInterface $logger,
+        private readonly NotificationRepository $notificationRepository,
+        private readonly EntityManagerInterface $entityManager
     ) {
         parent::__construct();
     }
@@ -45,13 +47,13 @@ class NotificationDelete extends Command
             $threeWeeksAgo = new \DateTime('now');
             $threeWeeksAgo->modify('-21 days');
 
-
             $notifications = $this->notificationRepository->createQueryBuilder('n')
                 ->where('n.createdAt < :threeWeeks')
                 ->andWhere('n.readingAt IS NULL')  // Correction de la condition de lecture
                 ->setParameter('threeWeeks', $threeWeeksAgo)
                 ->getQuery()
-                ->getResult();
+                ->getResult()
+            ;
 
             $output->writeln(sprintf('Nombre de notifications trouvées : %d', count($notifications)));
 
@@ -64,10 +66,12 @@ class NotificationDelete extends Command
             } else {
                 $this->logger->warning('Aucune notification à nettoyer');
             }
+
             return Command::SUCCESS;
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             $output->writeln('<error>' . $e->getMessage() . '</error>');
+
             return Command::FAILURE;
         }
     }
