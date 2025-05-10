@@ -1,8 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller;
 
-use App\DTO\contact\ContactCreateDTO;
+use App\DTO\Contact\ContactCreateDTO;
 use App\Entity\Contact;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemOperator;
@@ -24,11 +33,12 @@ final class ContactController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface        $logger,
-        private readonly FilesystemOperator     $contactStorage,
-        private readonly ValidatorInterface     $validator, private readonly CacheInterface $cache,
-    )
-    {}
+        private readonly LoggerInterface $logger,
+        private readonly FilesystemOperator $contactStorage,
+        private readonly ValidatorInterface $validator,
+        private readonly CacheInterface $cache,
+    ) {
+    }
 
     #[Route(methods: ['POST'])]
     public function post(Request $request): JsonResponse
@@ -41,7 +51,7 @@ final class ContactController extends AbstractController
                 'email' => $request->request->get('email'),
                 'title' => $request->request->get('title'),
                 'description' => $request->request->get('description'),
-                'tags'=> json_decode($request->request->get('tags'), true),
+                'tags' => json_decode($request->request->get('tags'), true),
             ];
 
             $contactCreateDTO = ContactCreateDTO::fromArray($data);
@@ -53,6 +63,7 @@ final class ContactController extends AbstractController
                 foreach ($violations as $violation) {
                     $errors[$violation->getPropertyPath()] = $violation->getMessage();
                 }
+
                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
             }
 
@@ -72,7 +83,7 @@ final class ContactController extends AbstractController
 
             if ($uploadedFile) {
                 if (filesize($uploadedFile) > 5000000) {
-                    return $this->json(['success'=>false, 'message'=> 'The weight of image is too big'], Response::HTTP_EXPECTATION_FAILED);
+                    return $this->json(['success' => false, 'message' => 'The weight of image is too big'], Response::HTTP_EXPECTATION_FAILED);
                 }
 
                 $fileName = uniqid('contact_') . '.jpg';
@@ -95,9 +106,9 @@ final class ContactController extends AbstractController
                 ['success' => true, 'contactId' => $contact->getId()],
                 Response::HTTP_CREATED
             );
-
         } catch (\Exception $e) {
-            $this->logger->error("Erreur lors de la création du contact: " . $e->getMessage());
+            $this->logger->error('Erreur lors de la création du contact: ' . $e->getMessage());
+
             return $this->json(['error' => 'Erreur serveur: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

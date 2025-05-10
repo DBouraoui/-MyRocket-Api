@@ -1,10 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Entity;
 
 use App\Repository\WebsiteVpsRepository;
-use App\service\EncryptionService;
-use Doctrine\DBAL\Types\Types;
+use App\Service\EncryptionService;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -46,7 +54,8 @@ class WebsiteVps
     private ?Website $website = null;
 
     #[ORM\PrePersist]
-    public function init() {
+    public function init()
+    {
         $this->createdAt = new \DateTimeImmutable('now');
         $this->updatedAt = new \DateTimeImmutable('now');
         $this->uuid = Uuid::v4();
@@ -56,9 +65,10 @@ class WebsiteVps
     }
 
     #[ORM\PreUpdate]
-    public function update() {
+    public function update()
+    {
         $this->updatedAt = new \DateTimeImmutable('now');
-            $encryptionService = new EncryptionService();
+        $encryptionService = new EncryptionService();
         if (!empty($this->password)) {
             $this->password = $encryptionService->encrypt($this->password);
         }
@@ -123,6 +133,7 @@ class WebsiteVps
     public function getPassword(): ?string
     {
         $encryptionService = new EncryptionService();
+
         return $encryptionService->decrypt($this->password);
     }
 
@@ -136,6 +147,7 @@ class WebsiteVps
     public function getPublicKey(): ?string
     {
         $encryptionService = new EncryptionService();
+
         return $encryptionService->decrypt($this->publicKey);
     }
 

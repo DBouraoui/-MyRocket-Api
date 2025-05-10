@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller;
 
 use App\Entity\ProjectsToDisplay;
@@ -14,16 +23,16 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-
 #[Route('/api/user/project', name: 'app_projects_to_diplay_')]
-#[isGranted('PUBLIC_ACCESS')]
+#[IsGranted('PUBLIC_ACCESS')]
 final class ProjectsToDiplayController extends AbstractController
 {
     public function __construct(
-        private readonly LoggerInterface             $logger,
+        private readonly LoggerInterface $logger,
         private readonly ProjectsToDisplayRepository $projectsToDisplayRepository,
         private readonly FilesystemOperator $projectStorage
-    ) {}
+    ) {
+    }
 
     #[Route(name: 'app_projects_to_diplay_get', methods: ['GET'])]
     public function get(Request $request): JsonResponse
@@ -47,6 +56,7 @@ final class ProjectsToDiplayController extends AbstractController
 
             if (!empty($all) && empty($getByKey)) {
                 $projects = $this->projectsToDisplayRepository->findAll();
+
                 return $this->json($this->normalizeProjects($projects, true), Response::HTTP_OK);
             }
 
@@ -56,6 +66,7 @@ final class ProjectsToDiplayController extends AbstractController
             );
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -72,7 +83,7 @@ final class ProjectsToDiplayController extends AbstractController
             $fileContent = $this->projectStorage->read($filename);
 
             // Déterminer le type MIME
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $finfo = new \finfo(\FILEINFO_MIME_TYPE);
             $mimeType = $finfo->buffer($fileContent) ?: 'application/octet-stream';
 
             // Créer la réponse avec les en-têtes appropriés
@@ -88,6 +99,7 @@ final class ProjectsToDiplayController extends AbstractController
             return $response;
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de la récupération de l\'image: ' . $e->getMessage());
+
             return new Response('Erreur lors de la récupération de l\'image', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -115,7 +127,7 @@ final class ProjectsToDiplayController extends AbstractController
                 if ($imageUrl) {
                     $pictureUrls[] = [
                         'filename' => $filename,
-                        'url' => $imageUrl
+                        'url' => $imageUrl,
                     ];
                 }
             }
@@ -134,6 +146,7 @@ final class ProjectsToDiplayController extends AbstractController
         foreach ($projects as $project) {
             $projectsToDisplay[] = $this->normalizeProject($project, $withImageUrls);
         }
+
         return $projectsToDisplay;
     }
 
@@ -146,12 +159,14 @@ final class ProjectsToDiplayController extends AbstractController
 
             if (!$this->projectStorage->fileExists($filename)) {
                 $this->logger->warning('Le fichier demandé n\'existe pas: ' . $filename);
+
                 return null;
             }
 
             return $this->generateUrl('app_projects_to_diplay_app_projects_image_get', ['filename' => $filename], UrlGeneratorInterface::ABSOLUTE_URL);
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de la génération de l\'URL de l\'image: ' . $e->getMessage());
+
             return null;
         }
     }

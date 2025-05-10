@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Entity;
 
 use App\Repository\ContactRepository;
@@ -43,7 +52,7 @@ class Contact
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: Types::JSON,nullable: true)]
+    #[ORM\Column(type: Types::JSON, nullable: true)]
     private array $pictures = [];
 
     public function getId(): ?int
@@ -172,7 +181,8 @@ class Contact
     }
 
     #[ORM\PrePersist]
-    public function initContact() {
+    public function initContact()
+    {
         $this->createdAt = new \DateTimeImmutable('now');
         $this->uuid = Uuid::v4();
     }

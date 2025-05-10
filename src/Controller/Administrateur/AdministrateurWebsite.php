@@ -1,11 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller\Administrateur;
 
 use App\Event\WebsiteCreateEvent;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteRepository;
-use App\service\WebsiteService;
+use App\Service\WebsiteService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -18,56 +27,55 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Cache\CacheInterface;
 
-
 #[Route(path: '/api/administrateur/website', name: 'api_administrateur_website_')]
-#[IsGranted("ROLE_ADMIN")]
+#[IsGranted('ROLE_ADMIN')]
 class AdministrateurWebsite extends AbstractController
 {
     public const GET_ALL_WEBSITES = 'getAllWebsites';
     public const GET_ONE_WEBSITE = 'getOneWebsite';
 
-
-    public function __construct
-    (
+    public function __construct(
         private WebsiteService $websiteService,
         private UserRepository $userRepository,
         private CacheInterface $cache,
         private readonly LoggerInterface $logger,
         private readonly WebsiteRepository $websiteRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly  EventDispatcherInterface  $event
+        private readonly EventDispatcherInterface $event
     ) {
-
     }
 
-    #[route(name: 'get', methods:['GET'] )]
-    public function getAllWebsite() {
+    #[Route(name: 'get', methods: ['GET'])]
+    public function getAllWebsite()
+    {
         try {
-            $websites =  $this->websiteRepository->findAll();
+            $websites = $this->websiteRepository->findAll();
 
             return $this->json($this->websiteService->normalizeWebsites($websites), Response::HTTP_OK);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error('Error fetching websites: ' . $e->getMessage());
+
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route(name: 'post', methods: ['POST'])]
-    public function post(Request $request) {
+    public function post(Request $request)
+    {
         try {
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                Throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
             }
 
             $user = $this->userRepository->findOneBy(['uuid' => $data['uuidUser']]);
 
             if (empty($user)) {
-                Throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::USER_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
-           $this->websiteService->createWebsite($data, $user);
+            $this->websiteService->createWebsite($data, $user);
 
             $this->cache->delete(self::GET_ALL_WEBSITES.$user->getUuid());
             $this->cache->delete(self::GET_ONE_WEBSITE.$user->getUuid());
@@ -76,42 +84,45 @@ class AdministrateurWebsite extends AbstractController
             $this->event->dispatch($event, WebsiteCreateEvent::NAME);
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_CREATED);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error('Error creating website: ' . $e->getMessage());
+
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (InvalidArgumentException $e) {
             $this->logger->error('Error creating website: ' . $e->getMessage());
+
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route(name: 'put', methods: ['PUT'])]
-    public function update(Request $request): JsonResponse {
+    public function update(Request $request): JsonResponse
+    {
         try {
             $data = json_decode($request->getContent(), true);
 
             if (empty($data)) {
-                Throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::EMPTY_DATA, Response::HTTP_NOT_FOUND);
             }
 
             if (!isset($data['uuid'])) {
-                Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
             }
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $data['uuid']]);
 
             if (!$website) {
-                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $allowedProperties = [
-                'type', 'title', 'url', 'description', 'status', 'uuidUser'
+                'type', 'title', 'url', 'description', 'status', 'uuidUser',
             ];
 
             foreach ($allowedProperties as $property) {
                 $setter = 'set' . ucfirst($property);
                 if (isset($data[$property])) {
-                    $website->$setter($data[$property]);
+                    $website->{$setter}($data[$property]);
                 }
             }
 
@@ -123,23 +134,25 @@ class AdministrateurWebsite extends AbstractController
             $this->cache->delete(self::GET_ONE_WEBSITE.$website->getUser()->getUuid());
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error('Error updating website: ' . $e->getMessage());
+
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route(path: '/{uuid}', name: 'delete', methods: ['DELETE'])]
-    public function delete(string $uuid): JsonResponse {
+    public function delete(string $uuid): JsonResponse
+    {
         try {
             if (empty($uuid)) {
-                Throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::EMPTY_UUID, Response::HTTP_NOT_FOUND);
             }
 
             $website = $this->websiteRepository->findOneBy(['uuid' => $uuid]);
 
             if (!$website) {
-                Throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
+                throw new \Exception(WebsiteService::WEBSITE_NOT_FOUND, Response::HTTP_NOT_FOUND);
             }
 
             $this->entityManager->remove($website);
@@ -149,14 +162,16 @@ class AdministrateurWebsite extends AbstractController
             $this->cache->delete(self::GET_ONE_WEBSITE.$website->getUser()->getUuid());
 
             return $this->json(WebsiteService::SUCCESS_RESPONSE, Response::HTTP_OK);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error('Error deleting website: ' . $e->getMessage());
+
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    #[route(path: '/all-informations', name: '_getallinformation', methods: ['GET'])]
-    public function getUserAndWebsiteInformations() {
+    #[Route(path: '/all-informations', name: '_getallinformation', methods: ['GET'])]
+    public function getUserAndWebsiteInformations()
+    {
         try {
             $users = $this->userRepository->findAll();
             $array = [];
@@ -172,23 +187,23 @@ class AdministrateurWebsite extends AbstractController
                         'description' => $websiteContract->getDescription(),
                         'status' => $websiteContract->getStatus(),
                         'type' => $websiteContract->getType(),
-                        'createdAt' => $websiteContract->getCreatedAt()->format("d-m-Y"),
-                        'updatedAt' => $websiteContract->getUpdatedAt()->format("d-m-Y")
+                        'createdAt' => $websiteContract->getCreatedAt()->format('d-m-Y'),
+                        'updatedAt' => $websiteContract->getUpdatedAt()->format('d-m-Y'),
                     ];
 
                     $websiteData['user'] = [
                         'uuid' => $websiteContract->getUser()->getUuid(),
-                        'companyName'=> $websiteContract->getUser()->getCompanyName(),
-                        'firstname'=> $websiteContract->getUser()->getFirstName(),
-                        'lastname'=> $websiteContract->getUser()->getLastName(),
-                        'email'=> $websiteContract->getUser()->getEmail(),
-                        'phone'=> $websiteContract->getUser()->getPhone(),
-                        'address'=> $websiteContract->getUser()->getAddress(),
-                        'city'=> $websiteContract->getUser()->getCity(),
-                        'postCode'=> $websiteContract->getUser()->getPostCode(),
-                        'country'=> $websiteContract->getUser()->getCountry(),
-                        'createdAt' =>$websiteContract->getUser()->getCreatedAt()->format("d-m-Y"),
-                        'updatedAt' =>$websiteContract->getUser()->getUpdatedAt()->format("d-m-Y")
+                        'companyName' => $websiteContract->getUser()->getCompanyName(),
+                        'firstname' => $websiteContract->getUser()->getFirstName(),
+                        'lastname' => $websiteContract->getUser()->getLastName(),
+                        'email' => $websiteContract->getUser()->getEmail(),
+                        'phone' => $websiteContract->getUser()->getPhone(),
+                        'address' => $websiteContract->getUser()->getAddress(),
+                        'city' => $websiteContract->getUser()->getCity(),
+                        'postCode' => $websiteContract->getUser()->getPostCode(),
+                        'country' => $websiteContract->getUser()->getCountry(),
+                        'createdAt' => $websiteContract->getUser()->getCreatedAt()->format('d-m-Y'),
+                        'updatedAt' => $websiteContract->getUser()->getUpdatedAt()->format('d-m-Y'),
                     ];
 
                     // Ajouter le contrat du site web s'il existe
@@ -198,12 +213,12 @@ class AdministrateurWebsite extends AbstractController
                             'monthlyCost' => $websiteContract->getWebsiteContract()->getmonthlyCost(),
                             'tva' => $websiteContract->getWebsiteContract()->getTva(),
                             'reccurence' => $websiteContract->getWebsiteContract()->getReccurence(),
-                            'createdAt' => $websiteContract->getWebsiteContract()->getCreatedAt()->format("d-m-Y"),
-                            'updatedAt' => $websiteContract->getWebsiteContract()->getUpdatedAt()->format("d-m-Y"),
+                            'createdAt' => $websiteContract->getWebsiteContract()->getCreatedAt()->format('d-m-Y'),
+                            'updatedAt' => $websiteContract->getWebsiteContract()->getUpdatedAt()->format('d-m-Y'),
                             'prestation' => $websiteContract->getWebsiteContract()->getPrestation(),
-                            'firstPaymentAt' => $websiteContract->getWebsiteContract()->getFirstPaymentAt()->format("d-m-Y"),
-                            'lastPaymentAt' => $websiteContract->getWebsiteContract()->getLastPaymentAt()->format("d-m-Y"),
-                            'nextPaymentAt' => $websiteContract->getWebsiteContract()->getNextPaymentAt()->format("d-m-Y"),
+                            'firstPaymentAt' => $websiteContract->getWebsiteContract()->getFirstPaymentAt()->format('d-m-Y'),
+                            'lastPaymentAt' => $websiteContract->getWebsiteContract()->getLastPaymentAt()->format('d-m-Y'),
+                            'nextPaymentAt' => $websiteContract->getWebsiteContract()->getNextPaymentAt()->format('d-m-Y'),
                         ];
                     }
 
@@ -211,39 +226,39 @@ class AdministrateurWebsite extends AbstractController
                     if ($websiteContract->getMaintenanceContract()) {
                         $websiteData['maintenanceContract'] = [
                             'uuid' => $websiteContract->getMaintenanceContract()->getUuid(),
-                            'startAt'=> $websiteContract->getMaintenanceContract()->getStartAt()->format("d-m-Y"),
+                            'startAt' => $websiteContract->getMaintenanceContract()->getStartAt()->format('d-m-Y'),
                             'monthlyCost' => $websiteContract->getMaintenanceContract()->getMonthlyCost(),
-                            'endAt' => $websiteContract->getMaintenanceContract()->getEndAt()->format("d-m-Y"),
+                            'endAt' => $websiteContract->getMaintenanceContract()->getEndAt()->format('d-m-Y'),
                             'reccurence' => $websiteContract->getMaintenanceContract()->getReccurence(),
-                            'createdAt' => $websiteContract->getMaintenanceContract()->getCreatedAt()->format("d-m-Y"),
-                            'firstPaymentAt' => $websiteContract->getMaintenanceContract()->getFirstPaymentAt()->format("d-m-Y"),
-                            'lastPaymentAt' => $websiteContract->getMaintenanceContract()->getLastPaymentAt()->format("d-m-Y"),
-                            'nextPaymentAt' => $websiteContract->getMaintenanceContract()->getNextPaymentAt()->format("d-m-Y"),
+                            'createdAt' => $websiteContract->getMaintenanceContract()->getCreatedAt()->format('d-m-Y'),
+                            'firstPaymentAt' => $websiteContract->getMaintenanceContract()->getFirstPaymentAt()->format('d-m-Y'),
+                            'lastPaymentAt' => $websiteContract->getMaintenanceContract()->getLastPaymentAt()->format('d-m-Y'),
+                            'nextPaymentAt' => $websiteContract->getMaintenanceContract()->getNextPaymentAt()->format('d-m-Y'),
                         ];
                     }
 
                     if ($websiteContract->getWebsiteVps()) {
                         $websiteData['websiteVps'] = [
                             'uuid' => $websiteContract->getWebsiteVps()->getUuid(),
-                            'address'=> $websiteContract->getWebsiteVps()->getAddress(),
-                            'username'=> $websiteContract->getWebsiteVps()->getUsername(),
-                            'password'=> $websiteContract->getWebsiteVps()->getPassword(),
-                            'port'=> $websiteContract->getWebsiteVps()->getPort(),
-                            'publicKey'=> $websiteContract->getWebsiteVps()->getPublicKey(),
-                            'updatedAt'=> $websiteContract->getWebsiteVps()->getUpdatedAt()->format("d-m-Y"),
-                            'createdAt' => $websiteContract->getWebsiteVps()->getCreatedAt()->format("d-m-Y"),
+                            'address' => $websiteContract->getWebsiteVps()->getAddress(),
+                            'username' => $websiteContract->getWebsiteVps()->getUsername(),
+                            'password' => $websiteContract->getWebsiteVps()->getPassword(),
+                            'port' => $websiteContract->getWebsiteVps()->getPort(),
+                            'publicKey' => $websiteContract->getWebsiteVps()->getPublicKey(),
+                            'updatedAt' => $websiteContract->getWebsiteVps()->getUpdatedAt()->format('d-m-Y'),
+                            'createdAt' => $websiteContract->getWebsiteVps()->getCreatedAt()->format('d-m-Y'),
                         ];
                     }
 
                     if ($websiteContract->getWebsiteMutualised()) {
                         $websiteData['websiteMutualised'] = [
                             'uuid' => $websiteContract->getWebsiteMutualised()->getUuid(),
-                            'address'=> $websiteContract->getWebsiteMutualised()->getAddress(),
-                            'username'=> $websiteContract->getWebsiteMutualised()->getUsername(),
-                            'password'=> $websiteContract->getWebsiteMutualised()->getPassword(),
-                            'port'=> $websiteContract->getWebsiteMutualised()->getPort(),
-                            'updatedAt'=> $websiteContract->getWebsiteMutualised()->getUpdatedAt()->format("d-m-Y"),
-                            'createdAt' => $websiteContract->getWebsiteMutualised()->getCreatedAt()->format("d-m-Y"),
+                            'address' => $websiteContract->getWebsiteMutualised()->getAddress(),
+                            'username' => $websiteContract->getWebsiteMutualised()->getUsername(),
+                            'password' => $websiteContract->getWebsiteMutualised()->getPassword(),
+                            'port' => $websiteContract->getWebsiteMutualised()->getPort(),
+                            'updatedAt' => $websiteContract->getWebsiteMutualised()->getUpdatedAt()->format('d-m-Y'),
+                            'createdAt' => $websiteContract->getWebsiteMutualised()->getCreatedAt()->format('d-m-Y'),
                         ];
                     }
 
@@ -252,10 +267,10 @@ class AdministrateurWebsite extends AbstractController
             }
 
             return new JsonResponse($array, Response::HTTP_OK);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+
             return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 }

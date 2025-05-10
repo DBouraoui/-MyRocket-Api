@@ -1,6 +1,15 @@
 <?php
 
-namespace App\traits;
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace App\Traits;
 
 use Doctrine\ORM\Mapping\Id;
 use Symfony\Component\Validator\Constraints\DateTime;
@@ -8,7 +17,8 @@ use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\Uuid;
 
-trait Contact {
+trait Contact
+{
     #[Id]
     public ?int $id;
 
@@ -18,16 +28,16 @@ trait Contact {
     #[Length(
         min: 1,
         max: 255,
-        minMessage: "Le titre doit contenir au moins {{ limit }} caractère.",
-        maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
+        minMessage: 'Le titre doit contenir au moins {{ limit }} caractère.',
+        maxMessage: 'Le titre ne peut pas dépasser {{ limit }} caractères.'
     )]
     public ?string $title;
 
     #[Length(
         min: 1,
         max: 255,
-        minMessage: "La description doit contenir au moins {{ limit }} caractère.",
-        maxMessage: "La description ne peut pas dépasser {{ limit }} caractères."
+        minMessage: 'La description doit contenir au moins {{ limit }} caractère.',
+        maxMessage: 'La description ne peut pas dépasser {{ limit }} caractères.'
     )]
     public ?string $description;
 
@@ -43,16 +53,16 @@ trait Contact {
     #[Length(
         min: 0,
         max: 255,
-        minMessage: "Le prénom doit contenir au moins {{ limit }} caractère.",
-        maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères."
+        minMessage: 'Le prénom doit contenir au moins {{ limit }} caractère.',
+        maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères.'
     )]
     public ?string $firstname;
 
     #[Length(
         min: 0,
         max: 255,
-        minMessage: "Le nom doit contenir au moins {{ limit }} caractère.",
-        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
+        minMessage: 'Le nom doit contenir au moins {{ limit }} caractère.',
+        maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères.'
     )]
     public ?string $lastname;
 
@@ -71,7 +81,8 @@ trait Contact {
 
     public array $pictures;
 
-    public function normalize(\App\Entity\User $user): array {
+    public function normalize(\App\Entity\User $user): array
+    {
         return [
             'uuid' => $this->uuid,
             'title' => $this->title,
@@ -86,7 +97,8 @@ trait Contact {
         ];
     }
 
-    public function normalizeArray(array $array): array {
+    public function normalizeArray(array $array): array
+    {
         $contactsArray = [];
 
         foreach ($array as $contact) {
@@ -98,7 +110,7 @@ trait Contact {
 
     public static function fromArray(array $data): self
     {
-        if(empty($data)) {
+        if (empty($data)) {
             throw new \Exception('The array is empty');
         }
 
@@ -109,6 +121,7 @@ trait Contact {
                 $self->{$key} = $value;
             }
         }
+
         return $self;
     }
 }

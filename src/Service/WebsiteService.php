@@ -1,6 +1,15 @@
 <?php
 
-namespace App\service;
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace App\Service;
 
 use App\Entity\Notification;
 use App\Entity\User;
@@ -8,8 +17,7 @@ use App\Entity\Website;
 use App\Entity\WebsiteContract;
 use App\Entity\WebsiteMutualised;
 use App\Entity\WebsiteVps;
-use App\traits\ExeptionTrait;
-use Doctrine\Common\Collections\Collection;
+use App\Traits\ExeptionTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -17,19 +25,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class WebsiteService
 {
     use ExeptionTrait;
-    public const CONFIGURATION_NOT_FOUND = "Configuration not found";
-    public const CONFIGURATION_ALREADY_EXISTS = "Configuration already exists";
+    public const CONFIGURATION_NOT_FOUND = 'Configuration not found';
+    public const CONFIGURATION_ALREADY_EXISTS = 'Configuration already exists';
 
-    public function __construct
-    (
+    public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ValidatorInterface $validator
-    )
-    {
+    ) {
     }
 
-
-    public function createWebsite(array $data,User $user): Website
+    public function createWebsite(array $data, User $user): Website
     {
         try {
             $website = new Website();
@@ -56,11 +61,12 @@ class WebsiteService
 
             return $website;
         } catch (\Exception $e) {
-            Throw new \Exception($e->getMessage(),$e->getCode());
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
     }
 
-    public function createMutualisedConfiguration(array $data, Website $website): WebsiteMutualised {
+    public function createMutualisedConfiguration(array $data, Website $website): WebsiteMutualised
+    {
         try {
             $websiteMutualised = new WebsiteMutualised();
             $websiteMutualised->setUsername($data['username']);
@@ -82,15 +88,15 @@ class WebsiteService
             $this->entityManager->flush();
 
             return $websiteMutualised;
-        } catch(\Exception $e) {
-            Throw new \Exception($e->getMessage(),$e->getCode());
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
     }
 
     public function createVPSConfiguration(array $data, Website $website): WebsiteVps
     {
         try {
-            $websitevps = new Websitevps();
+            $websitevps = new WebsiteVps();
             $websitevps->setUsername($data['username']);
             $websitevps->setPassword($data['password']);
             $websitevps->setAddress($data['address']);
@@ -110,14 +116,13 @@ class WebsiteService
             $this->entityManager->persist($notification);
             $this->entityManager->flush();
 
-
             return $websitevps;
-        } catch(\Exception $e) {
-            Throw new \Exception($e->getMessage(),$e->getCode());
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
     }
 
-    public function createWebsiteContract(array $data,User $user, Website $website): WebsiteContract
+    public function createWebsiteContract(array $data, User $user, Website $website): WebsiteContract
     {
         try {
             $websiteContract = new WebsiteContract();
@@ -150,11 +155,12 @@ class WebsiteService
 
             return $websiteContract;
         } catch (\Exception $e) {
-            Throw new \Exception($e->getMessage(),Response::HTTP_UNPROCESSABLE_ENTITY);
+            throw new \Exception($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
-    public function validate(Website $website): void {
+    public function validate(Website $website): void
+    {
         $errors = $this->validator->validate($website);
 
         if (count($errors) > 0) {
@@ -162,59 +168,65 @@ class WebsiteService
             foreach ($errors as $error) {
                 $errorMessages[] = $error->getMessage();
             }
-            $errorMessage = implode(", ", $errorMessages);
+            $errorMessage = implode(', ', $errorMessages);
 
-            Throw new \Exception(sprintf(self::ERROR_FILEDS_DATA, $errorMessage), Response::HTTP_BAD_REQUEST);
+            throw new \Exception(sprintf(self::ERROR_FILEDS_DATA, $errorMessage), Response::HTTP_BAD_REQUEST);
         }
     }
 
     /**
-     * Normalise une entité Website en tableau
+     * Normalise une entité Website en tableau.
      */
-    public function normalizeWebsite(Website $website): array {
+    public function normalizeWebsite(Website $website): array
+    {
         return [
-            "uuid" => $website->getUuid(),
-            "title" => $website->getTitle(),
-            "url" => $website->getUrl(),
-            "description" => $website->getDescription(),
-            "status" => $website->getStatus(),
-            "type" => $website->getType(),
-            "createdAt" => $website->getCreatedAt()?->format('m-d-Y'),
-            "updatedAt" => $website->getUpdatedAt()?->format('m-d-Y'),
+            'uuid' => $website->getUuid(),
+            'title' => $website->getTitle(),
+            'url' => $website->getUrl(),
+            'description' => $website->getDescription(),
+            'status' => $website->getStatus(),
+            'type' => $website->getType(),
+            'createdAt' => $website->getCreatedAt()?->format('m-d-Y'),
+            'updatedAt' => $website->getUpdatedAt()?->format('m-d-Y'),
         ];
     }
 
     /**
-     * Normalise un tableau d'entités Website en tableau de tableaux
+     * Normalise un tableau d'entités Website en tableau de tableaux.
      */
-    public function normalizeWebsites(array $websites): array {
+    public function normalizeWebsites(array $websites): array
+    {
         $websitesArray = [];
         foreach ($websites as $website) {
             $websitesArray[] = $this->normalizeWebsite($website);
         }
+
         return $websitesArray;
     }
 
-    public function normalizeWebsiteContract(WebsiteContract $websiteContract): array {
+    public function normalizeWebsiteContract(WebsiteContract $websiteContract): array
+    {
         return [
-            "uuid" => $websiteContract->getUuid(),
-            "monthlyCost" => $websiteContract->getmonthlyCost(),
-            "tva" => $websiteContract->getTva(),
-            "reccurence" => $websiteContract->getReccurence(),
-            "createdAt" => $websiteContract->getCreatedAt()?->format('m-d-Y'),
-            "updatedAt" => $websiteContract->getUpdatedAt()?->format('m-d-Y'),
-            "prestation" => $websiteContract->getPrestation(),
-            "firstPaymentAt" => $websiteContract->getFirstPaymentAt()?->format('m-d-Y'),
-            "lastPaymentAt" => $websiteContract->getLastPaymentAt()?->format('m-d-Y'),
-            "nextPaymentAt" => $websiteContract->getNextPaymentAt()?->format('m-d-Y'),
+            'uuid' => $websiteContract->getUuid(),
+            'monthlyCost' => $websiteContract->getmonthlyCost(),
+            'tva' => $websiteContract->getTva(),
+            'reccurence' => $websiteContract->getReccurence(),
+            'createdAt' => $websiteContract->getCreatedAt()?->format('m-d-Y'),
+            'updatedAt' => $websiteContract->getUpdatedAt()?->format('m-d-Y'),
+            'prestation' => $websiteContract->getPrestation(),
+            'firstPaymentAt' => $websiteContract->getFirstPaymentAt()?->format('m-d-Y'),
+            'lastPaymentAt' => $websiteContract->getLastPaymentAt()?->format('m-d-Y'),
+            'nextPaymentAt' => $websiteContract->getNextPaymentAt()?->format('m-d-Y'),
         ];
     }
 
-    public function normalizeWebsitesContracts(array $websitesContracts): array {
+    public function normalizeWebsitesContracts(array $websitesContracts): array
+    {
         $websitesArray = [];
         foreach ($websitesContracts as $websiteContract) {
             $websitesArray[] = $this->normalizeWebsiteContract($websiteContract);
         }
+
         return $websitesArray;
     }
 }

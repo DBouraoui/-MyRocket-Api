@@ -1,12 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\UserRepository;
-use App\Repository\WebsiteRepository;
-use App\service\WebsiteService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\WebsiteService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,29 +25,29 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('IS_AUTHENTICATED')]
 final class WebsiteContractController extends AbstractController
 {
-
-    public function __construct
-    (
+    public function __construct(
         private readonly LoggerInterface $logger,
         private readonly WebsiteService $websiteService,
-    )
-    {
+    ) {
     }
 
     #[Route(path: '/me', name: '_get_my_contract', methods: ['GET'])]
-    public function getMyContract(#[CurrentUser]User $user) {
+    public function getMyContract(#[CurrentUser] User $user)
+    {
         try {
-           $websitesContract = $user->getWebsiteContract()->toArray();
+            $websitesContract = $user->getWebsiteContract()->toArray();
 
             return new JsonResponse($this->websiteService->normalizeWebsitesContracts($websitesContract), Response::HTTP_OK);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            return new JsonResponse($e->getMessage(),Response::HTTP_INTERNAL_SERVER_ERROR);
+
+            return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    #[route(path: '/get/all', name: '_getall', methods: ['GET'])]
-    public function getAllInformation(#[CurrentUser]User $user) {
+    #[Route(path: '/get/all', name: '_getall', methods: ['GET'])]
+    public function getAllInformation(#[CurrentUser] User $user)
+    {
         try {
             $website = $user->getWebsites();
             $array = [];
@@ -53,9 +59,9 @@ final class WebsiteContractController extends AbstractController
                     'description' => $websiteContract->getDescription(),
                     'status' => $websiteContract->getStatus(),
                     'type' => $websiteContract->getType(),
-                    'createdAt' => $websiteContract->getCreatedAt()->format("d-m-Y"),
-                    'updatedAt' => $websiteContract->getUpdatedAt()->format("d-m-Y"),
-                    'hasConfig'=> $websiteContract->getWebsiteVps() || $websiteContract->getWebsiteMutualised(),
+                    'createdAt' => $websiteContract->getCreatedAt()->format('d-m-Y'),
+                    'updatedAt' => $websiteContract->getUpdatedAt()->format('d-m-Y'),
+                    'hasConfig' => $websiteContract->getWebsiteVps() || $websiteContract->getWebsiteMutualised(),
                 ];
 
                 // Ajouter le contrat du site web s'il existe
@@ -65,12 +71,12 @@ final class WebsiteContractController extends AbstractController
                         'monthlyCost' => $websiteContract->getWebsiteContract()->getmonthlyCost(),
                         'tva' => $websiteContract->getWebsiteContract()->getTva(),
                         'reccurence' => $websiteContract->getWebsiteContract()->getReccurence(),
-                        'createdAt' => $websiteContract->getWebsiteContract()->getCreatedAt()->format("d-m-Y"),
-                        'updatedAt' => $websiteContract->getWebsiteContract()->getUpdatedAt()->format("d-m-Y"),
+                        'createdAt' => $websiteContract->getWebsiteContract()->getCreatedAt()->format('d-m-Y'),
+                        'updatedAt' => $websiteContract->getWebsiteContract()->getUpdatedAt()->format('d-m-Y'),
                         'prestation' => $websiteContract->getWebsiteContract()->getPrestation(),
-                        'firstPaymentAt' => $websiteContract->getWebsiteContract()->getFirstPaymentAt()->format("d-m-Y"),
-                        'lastPaymentAt' => $websiteContract->getWebsiteContract()->getLastPaymentAt()->format("d-m-Y"),
-                        'nextPaymentAt' => $websiteContract->getWebsiteContract()->getNextPaymentAt()->format("d-m-Y"),
+                        'firstPaymentAt' => $websiteContract->getWebsiteContract()->getFirstPaymentAt()->format('d-m-Y'),
+                        'lastPaymentAt' => $websiteContract->getWebsiteContract()->getLastPaymentAt()->format('d-m-Y'),
+                        'nextPaymentAt' => $websiteContract->getWebsiteContract()->getNextPaymentAt()->format('d-m-Y'),
                     ];
                 }
 
@@ -78,14 +84,14 @@ final class WebsiteContractController extends AbstractController
                 if ($websiteContract->getMaintenanceContract()) {
                     $websiteData['maintenanceContract'] = [
                         'uuid' => $websiteContract->getMaintenanceContract()->getUuid(),
-                        'startAt'=> $websiteContract->getMaintenanceContract()->getStartAt()->format("d-m-Y"),
+                        'startAt' => $websiteContract->getMaintenanceContract()->getStartAt()->format('d-m-Y'),
                         'monthlyCost' => $websiteContract->getMaintenanceContract()->getMonthlyCost(),
-                        'endAt' => $websiteContract->getMaintenanceContract()->getEndAt()->format("d-m-Y"),
+                        'endAt' => $websiteContract->getMaintenanceContract()->getEndAt()->format('d-m-Y'),
                         'reccurence' => $websiteContract->getMaintenanceContract()->getReccurence(),
-                        'createdAt' => $websiteContract->getMaintenanceContract()->getCreatedAt()->format("d-m-Y"),
-                        'firstPaymentAt' => $websiteContract->getMaintenanceContract()->getFirstPaymentAt()->format("d-m-Y"),
-                        'lastPaymentAt' => $websiteContract->getMaintenanceContract()->getLastPaymentAt()->format("d-m-Y"),
-                        'nextPaymentAt' => $websiteContract->getMaintenanceContract()->getNextPaymentAt()->format("d-m-Y"),
+                        'createdAt' => $websiteContract->getMaintenanceContract()->getCreatedAt()->format('d-m-Y'),
+                        'firstPaymentAt' => $websiteContract->getMaintenanceContract()->getFirstPaymentAt()->format('d-m-Y'),
+                        'lastPaymentAt' => $websiteContract->getMaintenanceContract()->getLastPaymentAt()->format('d-m-Y'),
+                        'nextPaymentAt' => $websiteContract->getMaintenanceContract()->getNextPaymentAt()->format('d-m-Y'),
                     ];
                 }
 
@@ -93,11 +99,10 @@ final class WebsiteContractController extends AbstractController
             }
 
             return new JsonResponse($array, Response::HTTP_OK);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            return new JsonResponse($e->getMessage(),Response::HTTP_INTERNAL_SERVER_ERROR);
+
+            return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-
 }

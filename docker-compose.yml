@@ -1,25 +1,23 @@
 services:
   database:
     image: mysql:8.0
-    env_file:
-      - .env.local
     environment:
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-!ChangeMe!}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-ChangeMe!}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-app}
     restart: always
     ports:
       - "3306:3306"
     volumes:
       - database_data:/var/lib/mysql
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    environment:
-      PMA_HOST: database
-      PMA_PORT: 3306
-    ports:
-      - "8080:80"
+#  phpmyadmin:
+#    image: phpmyadmin:latest
+#    environment:
+#      PMA_HOST: database
+#      PMA_PORT: 3306
+#    ports:
+#      - "8080:80"
 volumes:
   database_data:

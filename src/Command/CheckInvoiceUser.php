@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Command;
 
 use App\Entity\Notification;
@@ -8,7 +17,7 @@ use App\Event\TransactionCreateEvent;
 use App\Event\TransactionRapportAdmin;
 use App\Repository\UserRepository;
 use App\Repository\WebsiteContractRepository;
-use App\service\NotificationService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -24,10 +33,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CheckInvoiceUser extends Command
 {
     public function __construct(
-        private readonly LoggerInterface           $logger,
+        private readonly LoggerInterface $logger,
         private readonly WebsiteContractRepository $websiteContractRepository,
-        private readonly EntityManagerInterface    $entityManager,
-        private readonly EventDispatcherInterface  $eventDispatcher,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly UserRepository $userRepository
     ) {
         parent::__construct();
@@ -53,7 +62,8 @@ class CheckInvoiceUser extends Command
                 ->setParameter('today', $today)
                 ->setParameter('tomorrow', $tomorrow)
                 ->getQuery()
-                ->getResult();
+                ->getResult()
+            ;
 
             $output->writeln(sprintf('Nombre de contrats trouvés : %d', count($websiteContracts)));
 
@@ -96,17 +106,17 @@ class CheckInvoiceUser extends Command
 
                 $user = $this->userRepository->findOneBy(['email' => 'dylan.bouraoui@epitech.eu']);
 
-                $event = new TransactionRapportAdmin($data,$user);
+                $event = new TransactionRapportAdmin($data, $user);
                 $this->eventDispatcher->dispatch($event, TransactionRapportAdmin::NAME);
             } else {
                 $this->logger->warning('Aucune facture en à envoyer');
             }
 
-
             return Command::SUCCESS;
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             $output->writeln('<error>' . $e->getMessage() . '</error>');
+
             return Command::FAILURE;
         }
     }

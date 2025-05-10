@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Entity;
 
 use App\Repository\MaintenanceContractRepository;
@@ -49,7 +58,8 @@ class MaintenanceContract
     private ?\DateTimeImmutable $nextPaymentAt = null;
 
     #[ORM\PrePersist]
-    public function init() {
+    public function init()
+    {
         $this->createdAt = new \DateTimeImmutable('now');
         $this->uuid = Uuid::v4();
     }
@@ -190,5 +200,4 @@ class MaintenanceContract
 
         return $this;
     }
-
 }

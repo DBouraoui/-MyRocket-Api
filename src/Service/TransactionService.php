@@ -1,11 +1,20 @@
 <?php
 
-namespace App\service;
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace App\Service;
 
 use App\Entity\Transaction;
 use App\Entity\User;
 use App\Entity\WebsiteContract;
-use App\traits\ExeptionTrait;
+use App\Traits\ExeptionTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,7 +26,8 @@ class TransactionService
     {
     }
 
-    public function createTransaction(User $user, WebsiteContract $websiteContract) {
+    public function createTransaction(User $user, WebsiteContract $websiteContract)
+    {
         try {
             $transaction = new Transaction();
             $transaction->setUser($user);
@@ -30,12 +40,13 @@ class TransactionService
             $this->entityManager->flush();
 
             return $transaction;
-        } catch(\Exception $e) {
-            Throw new \Exception($e->getMessage(),Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
-    public function normalizeTransaction(Transaction $transaction) {
+    public function normalizeTransaction(Transaction $transaction)
+    {
         return [
             'uuid' => $transaction->getUuid(),
             'amount' => $transaction->getAmount(),
@@ -43,18 +54,20 @@ class TransactionService
             'createdAt' => $transaction->getCreatedAt()->format('d-m-Y H:i:s'),
             'user' => $transaction->getUser()->getEmail(),
             'userUuid' => $transaction->getUser()->getUuid(),
-            'websiteContract'=> $transaction->getWebsiteContract()->getPrestation(),
+            'websiteContract' => $transaction->getWebsiteContract()->getPrestation(),
             'websiteUuid' => $transaction->getWebsiteContract()->getUuid(),
-            'isPaid'=> $transaction->isPaid(),
+            'isPaid' => $transaction->isPaid(),
             'reminderAt' => $transaction->getReminderSentAt()?->format('d-m-Y H:i:s'),
         ];
     }
 
-    public function normaliseTransactions(array $transactions) {
-        $transactionsArray= [];
+    public function normaliseTransactions(array $transactions)
+    {
+        $transactionsArray = [];
         foreach ($transactions as $transaction) {
             $transactionsArray[] = $this->normalizeTransaction($transaction);
         }
+
         return $transactionsArray;
     }
 }

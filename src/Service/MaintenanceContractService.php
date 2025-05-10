@@ -1,24 +1,33 @@
 <?php
 
-namespace App\service;
+declare(strict_types=1);
+
+/*
+ * This file is part of the Rocket project.
+ * (c) dylan bouraoui <contact@myrocket.fr>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace App\Service;
 
 use App\Entity\MaintenanceContract;
 use App\Entity\Notification;
 use App\Entity\User;
 use App\Entity\Website;
-use App\traits\ExeptionTrait;
+use App\Traits\ExeptionTrait;
 use Doctrine\ORM\EntityManagerInterface;
 
 class MaintenanceContractService
 {
     use ExeptionTrait;
 
-
     public function __construct(private readonly EntityManagerInterface $entityManager)
     {
     }
 
-    public function createService(User $user, Website $website, $data): MaintenanceContract {
+    public function createService(User $user, Website $website, $data): MaintenanceContract
+    {
         try {
             $startAt = \DateTimeImmutable::createFromFormat('Y-m-d', $data['startAt']) ?: new \DateTimeImmutable($data['startAt']);
             $firstPaymentAt = \DateTimeImmutable::createFromFormat('Y-m-d', $data['firstPaymentAt']) ?: new \DateTimeImmutable($data['firstPaymentAt']);
@@ -40,7 +49,6 @@ class MaintenanceContractService
             $this->entityManager->persist($maintenanceContract);
             $this->entityManager->flush();
 
-
             $notification = new Notification();
             $notification->setUser($user);
             $notification->setIsPriotity(false);
@@ -50,32 +58,34 @@ class MaintenanceContractService
             $this->entityManager->persist($notification);
             $this->entityManager->flush();
 
-
             return $maintenanceContract;
-        } catch(\Exception $e) {
-            Throw new \Exception($e->getMessage(),$e->getCode());
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
     }
 
-    public function normalizeMaintenanceContract(MaintenanceContract $maintenanceContract): array {
+    public function normalizeMaintenanceContract(MaintenanceContract $maintenanceContract): array
+    {
         return [
-            'uuid'=>$maintenanceContract->getUuid(),
-            'startAt'=>$maintenanceContract->getStartAt()->format('d-m-Y'),
-            'endAt'=>$maintenanceContract->getEndAt()->format('d-m-Y'),
-            'firstPaymentAt'=>$maintenanceContract->getFirstPaymentAt()->format('d-m-Y'),
-            'nextPaymentAt'=>$maintenanceContract->getNextPaymentAt()->format('d-m-Y'),
-            'lastPaymentAt'=>$maintenanceContract->getLastPaymentAt()->format('d-m-Y'),
-            'monthlyCost'=>$maintenanceContract->getMonthlyCost(),
-            'reccurence'=>$maintenanceContract->getReccurence(),
-            'createdAt'=>$maintenanceContract->getCreatedAt()->format('d-m-Y'),
+            'uuid' => $maintenanceContract->getUuid(),
+            'startAt' => $maintenanceContract->getStartAt()->format('d-m-Y'),
+            'endAt' => $maintenanceContract->getEndAt()->format('d-m-Y'),
+            'firstPaymentAt' => $maintenanceContract->getFirstPaymentAt()->format('d-m-Y'),
+            'nextPaymentAt' => $maintenanceContract->getNextPaymentAt()->format('d-m-Y'),
+            'lastPaymentAt' => $maintenanceContract->getLastPaymentAt()->format('d-m-Y'),
+            'monthlyCost' => $maintenanceContract->getMonthlyCost(),
+            'reccurence' => $maintenanceContract->getReccurence(),
+            'createdAt' => $maintenanceContract->getCreatedAt()->format('d-m-Y'),
         ];
     }
 
-    public function normalizeMaintenancesContracts(array $maintenanceContracts): array {
+    public function normalizeMaintenancesContracts(array $maintenanceContracts): array
+    {
         $contracts = [];
         foreach ($maintenanceContracts as $maintenanceContract) {
             $contracts[] = $this->normalizeMaintenanceContract($maintenanceContract);
         }
+
         return $contracts;
     }
 }
